@@ -1,0 +1,51 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Python packaging/build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Test/cache output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Environment/config secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+
+# VS Code / JetBrains
+.vscode/
+.idea/
+
+# Linux temporary files
+*~
+*.swp
+*.swo
