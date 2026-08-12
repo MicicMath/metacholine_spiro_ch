@@ -6,8 +6,8 @@
 
 ## R Workflow
 - Run analysis scripts from `analysis/`, because they use relative paths such as `source("./data_prep.R")` and `read.csv("../dat/...")`.
-- Main entrypoints are ordered: `setup.R` defines/install-loads packages and helpers, `data_prep.R` sources setup and creates `final_ast_hc_dat`, and `descriptives.R` sources data prep and builds the PCA plot.
-- Focused smoke check: `Rscript descriptives.R` from `analysis/`. `Rscript analysis/descriptives.R` from the repo root will not resolve the script's relative paths.
+- Main entrypoints are ordered: `setup.R` defines/install-loads packages and helpers, `data_prep.R` sources setup and creates `final_ast_hc_dat`, and `pca_descriptive.R` sources data prep and builds the PCA plot.
+- Focused smoke check: `Rscript pca_descriptive.R` from `analysis/`. `Rscript analysis/pca_descriptive.R` from the repo root will not resolve the script's relative paths.
 - `setup.R` calls `install.packages()` for missing packages via `packageManage()`. Do not run it casually in constrained/offline environments unless package installation is acceptable.
 
 ## Editing Notes
