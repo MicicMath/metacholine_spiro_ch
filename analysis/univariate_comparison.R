@@ -1,6 +1,7 @@
 source("./data_prep.R")
 
-dat = final_ast_hc_dat[, cols]
+dat = final_ast_hc_cf_dat[, cols]
+dat = dat[dat$diagnosis != "PUL_CF", , drop = FALSE]
 
 dat$diagnosis = ifelse(
   dat$diagnosis == "PUL_ASTHMA_ALLERGIC",

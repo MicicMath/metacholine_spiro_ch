@@ -61,15 +61,15 @@ e_dat = rbind(e_dat_0, e_dat_1)
 # subset to asthma and healthy
 ##############################
 
-ast_hc_mask = (rdcp_dat$diagnosis %in% c("HC", "PUL_ASTHMA_ALLERGIC", "PUL_ASTHMA_NONALLERGIC"))
+ast_hc_cf_mask = (rdcp_dat$diagnosis %in% c("HC", "PUL_ASTHMA_ALLERGIC", "PUL_ASTHMA_NONALLERGIC", "PUL_CF"))
 
-rdcp_dat_ast_hc = rdcp_dat[ast_hc_mask, , drop = FALSE]
+rdcp_dat_ast_hc_cf = rdcp_dat[ast_hc_cf_mask, , drop = FALSE]
 
 ###################
 # combine with rdcp
 ###################
 
-final_ast_hc_dat = merge(e_dat, rdcp_dat_ast_hc, by = "m_id", sort = FALSE)
+final_ast_hc_cf_dat = merge(e_dat, rdcp_dat_ast_hc_cf, by = "m_id", sort = FALSE)
 
 # write.csv(final_ast_hc_dat, "../dat/merged_e_dat_rdcp.csv", row.names = FALSE)
 
