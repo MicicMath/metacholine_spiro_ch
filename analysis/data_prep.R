@@ -1,8 +1,56 @@
 source("./setup.R")
 
-########
-# setup
-########
+#############
+# import rdpc
+#############
+
+rdcp_dat = read.csv("../dat/rdcp_exhal_analysis.csv")
+colnames(rdcp_dat)[colnames(rdcp_dat) == "measurement_id_exhal"] = "m_id"
+
+###########################
+# subset to relevant labels
+###########################
+
+rdcp_exhal_dat = rdcp_dat[
+  !is.na(rdcp_dat$m_id) &
+    rdcp_dat$diagnosis %in% c(
+      "HC",
+      "PUL_ASTHMA_ALLERGIC",
+      "PUL_ASTHMA_NONALLERGIC",
+      "PUL_CF"
+    ), ,
+  drop = FALSE
+]
+
+###############################################
+# import eNose dat and filter by measurement id
+###############################################
+
+e_dat_0 = read.csv("../dat/dat_ch_enose_20260105.csv")
+e_dat_1 = read.csv("../dat/dat_ch_enose_20260808.csv")
+
+colnames(e_dat_0)[colnames(e_dat_0) == "id"] = "m_id"
+colnames(e_dat_1)[colnames(e_dat_1) == "id"] = "m_id"
+
+e_dat_0 = e_dat_0[e_dat_0$m_id %in% rdcp_exhal_dat$m_id, ]
+e_dat_1 = e_dat_1[e_dat_1$m_id %in% rdcp_exhal_dat$m_id, ]
+
+########################
+# merge with REDCap data
+########################
+
+e_dat = rbind(e_dat_0, e_dat_1)
+
+final_ast_hc_cf_dat = merge(
+  e_dat,
+  rdcp_exhal_dat,
+  by = "m_id",
+  sort = FALSE
+)
+
+#########################
+# subset to relevant cols
+#########################
 
 sensors = c(
   "S1",
@@ -30,46 +78,79 @@ cols = c(
   "metacholine_test_result"
 )
 
-#############
-# import rdpc
-#############
-
-rdcp_dat = read.csv("../dat/rdcp_exhal_analysis.csv")
-colnames(rdcp_dat)[colnames(rdcp_dat) == "measurement_id_exhal"] = "m_id"
-
-##############
-# import e_dat
-##############
-
-e_dat_0 = read.csv("../dat/dat_ch_enose_20260105.csv")
-colnames(e_dat_0)[colnames(e_dat_0) == "id"] = "m_id"
-
-table(e_dat_0$m_id %in% rdcp_dat$m_id)
-
-e_dat_0 = e_dat_0[e_dat_0$m_id %in% rdcp_dat$m_id, ]
-
-e_dat_1 = read.csv("../dat/dat_ch_enose_20260808.csv")
-colnames(e_dat_1)[colnames(e_dat_1) == "id"] = "m_id"
-
-table(e_dat_1$m_id %in% rdcp_dat$m_id)
-
-e_dat_1 = e_dat_1[e_dat_1$m_id %in% rdcp_dat$m_id, ]
-
-e_dat = rbind(e_dat_0, e_dat_1)
-
-##############################
-# subset to asthma and healthy
-##############################
-
-ast_hc_cf_mask = (rdcp_dat$diagnosis %in% c("HC", "PUL_ASTHMA_ALLERGIC", "PUL_ASTHMA_NONALLERGIC", "PUL_CF"))
-
-rdcp_dat_ast_hc_cf = rdcp_dat[ast_hc_cf_mask, , drop = FALSE]
+final_ast_hc_cf_dat = final_ast_hc_cf_dat[, cols]
 
 ###################
-# combine with rdcp
+# relabel diagnosis
 ###################
 
-final_ast_hc_cf_dat = merge(e_dat, rdcp_dat_ast_hc_cf, by = "m_id", sort = FALSE)
+final_ast_hc_cf_dat$diagnosis = ifelse(
+  final_ast_hc_cf_dat$diagnosis == "PUL_ASTHMA_ALLERGIC",
+  "AST_AL",
+  ifelse(final_ast_hc_cf_dat$diagnosis == "PUL_ASTHMA_NONALLERGIC",
+    "AST_NOAL",
+    ifelse(final_ast_hc_cf_dat$diagnosis == "PUL_CF",
+      "CF", "HC"
+    )
+  )
+)
 
-# write.csv(final_ast_hc_dat, "../dat/merged_e_dat_rdcp.csv", row.names = FALSE)
+##########################################
+# relabel metacholine provocation response
+##########################################
+
+final_ast_hc_cf_dat$metacholine_response = ifelse(
+  (grepl("AST", final_ast_hc_cf_dat$diagnosis)) & (final_ast_hc_cf_dat$metacholine_test_result == 0),
+  "Neg", ifelse(
+    (grepl("AST", final_ast_hc_cf_dat$diagnosis)) & (final_ast_hc_cf_dat$metacholine_test_result == 1),
+    "Low", ifelse(
+      (grepl("AST", final_ast_hc_cf_dat$diagnosis)) & (final_ast_hc_cf_dat$metacholine_test_result == 2),
+      "Mid", ifelse(
+        (grepl("AST", final_ast_hc_cf_dat$diagnosis)) & (final_ast_hc_cf_dat$metacholine_test_result == 3),
+        "High", "No_test"
+      )
+    )
+  )
+)
+
+final_ast_hc_cf_dat$metacholine_response = ifelse(
+  is.na(final_ast_hc_cf_dat$metacholine_response),
+  "No_test",
+  final_ast_hc_cf_dat$metacholine_response
+)
+
+final_ast_hc_cf_dat$metacholine_response = factor(
+  final_ast_hc_cf_dat$metacholine_response,
+  levels = c("No_test", "Neg", "Low", "Mid", "High")
+)
+
+###############################################
+# diagnosis confirmed filter and only 1st visit
+###############################################
+
+diag_confirmed_mask = !is.na(final_ast_hc_cf_dat$diagnosis_status) &
+  final_ast_hc_cf_dat$diagnosis_status == 1
+
+hc_mask = final_ast_hc_cf_dat$diagnosis == "HC"
+
+first_visit_mask = !is.na(final_ast_hc_cf_dat$visit_exhal) &
+  final_ast_hc_cf_dat$visit_exhal == 1
+
+final_ast_hc_cf_dat = final_ast_hc_cf_dat[
+  (diag_confirmed_mask | hc_mask) & first_visit_mask,
+  ,
+  drop = FALSE
+]
+
+##########################################################
+# remove non allergic asthma and relabel to simpler labels
+##########################################################
+
+final_ast_hc_cf_dat = final_ast_hc_cf_dat[!(final_ast_hc_cf_dat$diagnosis == "AST_NOAL"), , drop = FALSE]
+
+final_ast_hc_cf_dat$diagnosis_simple = ifelse(
+  final_ast_hc_cf_dat$diagnosis == "AST_AL",
+  "AST",
+  final_ast_hc_cf_dat$diagnosis
+)
 

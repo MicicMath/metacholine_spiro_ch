@@ -1,67 +1,16 @@
 source("./data_prep.R")
 
-dat = final_ast_hc_cf_dat[, cols]
-dat = dat[dat$diagnosis != "PUL_CF", , drop = FALSE]
+dat = final_ast_hc_cf_dat
+dat = dat[dat$diagnosis != "CF", , drop = FALSE]
 
-dat$diagnosis = ifelse(
-  dat$diagnosis == "PUL_ASTHMA_ALLERGIC",
-  "AST_AL",
-  ifelse(dat$diagnosis == "PUL_ASTHMA_NONALLERGIC",
-    "AST_NOAL", "HC"
-  )
-)
+###############################################################
+# restrict to mid and high metacholine response only for asthma
+###############################################################
 
-#############################
-# exclude asthma non-allergic
-#############################
+mid_high_metach_response_mask = dat$metacholine_response %in% c("Mid", "High")
+other_mask = dat$diagnosis_simple != "AST"
 
-dat = dat[dat$diagnosis != "AST_NOAL", , drop = FALSE]
-
-#######################
-# remap diagnosis label
-#######################
-
-dat$diagnosis_simple = ifelse(dat$diagnosis == "HC", "HC", "AST")
-
-#######################
-# add metacholine label
-#######################
-
-dat$metacho = ifelse(
-  (dat$diagnosis_simple == "AST") & (dat$metacholine_test_result == 0),
-  "R0", ifelse(
-    (dat$diagnosis_simple == "AST") & (dat$metacholine_test_result == 1),
-    "R1", ifelse(
-      (dat$diagnosis_simple == "AST") & (dat$metacholine_test_result == 2),
-      "R2", ifelse(
-        (dat$diagnosis_simple == "AST") & (dat$metacholine_test_result == 3),
-        "R3", "HC"
-      )
-    )
-  )
-)
-
-###################################
-# remove asthma with no metacholine
-###################################
-
-mask_no_metacho = (dat$diagnosis_simple == "AST") & is.na(dat$metacholine_test_result)
-
-dat = dat[!mask_no_metacho, , drop = FALSE]
-
-#################################
-# restrict to confirmed diagnosis
-#################################
-
-conf_diag = (dat$diagnosis_status == 1) | is.na(dat$diagnosis_status)
-dat = dat[conf_diag, , drop = FALSE]
-
-#######################################
-# restrict to metacholine level 2 and 3
-#######################################
-
-metacho_23 = (dat$metacho %in% c("R2", "R3")) | dat$diagnosis == "HC"
-dat = dat[metacho_23, , drop = FALSE]
+dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
 ####
 # st

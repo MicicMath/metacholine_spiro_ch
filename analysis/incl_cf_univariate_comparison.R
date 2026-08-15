@@ -1,72 +1,15 @@
 source("./data_prep.R")
 
-dat = final_ast_hc_cf_dat[, cols]
+dat = final_ast_hc_cf_dat
 
-dat$diagnosis = ifelse(
-  dat$diagnosis == "PUL_ASTHMA_ALLERGIC",
-  "AST_AL",
-  ifelse(dat$diagnosis == "PUL_ASTHMA_NONALLERGIC",
-    "AST_NOAL",
-    ifelse(dat$diagnosis == "PUL_CF",
-      "CF", "HC"
-    )
-  )
-)
+###############################################################
+# restrict to mid and high metacholine response only for asthma
+###############################################################
 
-#############################
-# exclude asthma non-allergic
-#############################
+mid_high_metach_response_mask = dat$metacholine_response %in% c("Mid", "High")
+other_mask = dat$diagnosis_simple != "AST"
 
-dat = dat[dat$diagnosis != "AST_NOAL", , drop = FALSE]
-
-#######################
-# remap diagnosis label
-#######################
-
-dat$diagnosis = ifelse(
-  grepl("AST", dat$diagnosis),
-  "AST", dat$diagnosis
-)
-
-#######################
-# add metacholine label
-#######################
-
-dat$metacho = ifelse(
-  (dat$diagnosis == "AST") & (dat$metacholine_test_result == 0),
-  "R0", ifelse(
-    (dat$diagnosis == "AST") & (dat$metacholine_test_result == 1),
-    "R1", ifelse(
-      (dat$diagnosis == "AST") & (dat$metacholine_test_result == 2),
-      "R2", ifelse(
-        (dat$diagnosis == "AST") & (dat$metacholine_test_result == 3),
-        "R3", dat$diagnosis
-      )
-    )
-  )
-)
-
-###################################
-# remove asthma with no metacholine
-###################################
-
-mask_no_metacho = (dat$diagnosis == "AST") & is.na(dat$metacholine_test_result)
-
-dat = dat[!mask_no_metacho, , drop = FALSE]
-
-#################################
-# restrict to confirmed diagnosis
-#################################
-
-conf_diag = (dat$diagnosis_status == 1) | is.na(dat$diagnosis_status)
-dat = dat[conf_diag, , drop = FALSE]
-
-#######################################
-# restrict to metacholine level 2 and 3
-#######################################
-
-metacho_23 = (dat$metacho %in% c("R2", "R3")) | dat$diagnosis == "HC" | dat$diagnosis == "CF"
-dat = dat[metacho_23, , drop = FALSE]
+dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
 ####
 # st
@@ -75,13 +18,13 @@ dat = dat[metacho_23, , drop = FALSE]
 post_hoc = mclapply(
   sensors,
   function(x) {
-    form = as.formula(paste0(x, " ~ diagnosis"))
+    form = as.formula(paste0(x, " ~ diagnosis_simple"))
     krusk = kruskal_test(data = dat, form)
 
     dt = dunn_test(form, data = dat, p.adjust.method = "holm", detailed = TRUE)
 
     pwc = pairwise_wilcox_test(dat, form, p.adjust.method = "bonferroni", detailed = TRUE)
-    factor_levels = levels(dat$diagnosis)
+    factor_levels = levels(dat$diagnosis_simple)
     pwc = pwc[order(match(pwc$group1, factor_levels), match(pwc$group2, factor_levels)), ]
 
     max_y = max(dat[[x]], na.rm = TRUE)
@@ -152,14 +95,14 @@ bp_plots = function(res, dat, sensor, p_adj) {
     seq(0.1, 0.5, length.out = nrow(pw_dunn)) * max(dat[[sensor]], na.rm = TRUE)
 
   bp1 = ggboxplot(dat,
-    x = "diagnosis", y = sensor,
+    x = "diagnosis_simple", y = sensor,
     width = 0.5,
     fill = "lightgrey",
     color = "grey",
     alpha = 0.1, legend = "none", outlier.shape = NA
   ) +
     geom_point(
-      data = dat, aes(x = diagnosis, y = !!sym(sensor), fill = diagnosis, color = diagnosis),
+      data = dat, aes(x = diagnosis_simple, y = !!sym(sensor), fill = diagnosis_simple, color = diagnosis_simple),
       size = 1, alpha = 0.5, position = position_jitter(w = 0.2)
     ) +
     scale_color_manual(values = color_alt) +
@@ -187,7 +130,7 @@ bp_plots = function(res, dat, sensor, p_adj) {
       )
     ) +
     theme_classic() +
-    ggtheme_no_legend_45
+    ggtheme_no_legend
   return(bp1)
 }
 
@@ -206,5 +149,4 @@ plt_all = plot_grid(
   align = "hv"
 )
 plt_all
-
 
