@@ -16,6 +16,7 @@ packageManage(
   "ggrepel",
   "scales",
   "grid",
+  "glmnet",
   "parallel",
   "boot",
   "dplyr",
