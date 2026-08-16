@@ -129,7 +129,8 @@ final_ast_hc_cf_dat$metacholine_response = factor(
 ###############################################
 
 diag_confirmed_mask = !is.na(final_ast_hc_cf_dat$diagnosis_status) &
-  final_ast_hc_cf_dat$diagnosis_status == 1
+  final_ast_hc_cf_dat$diagnosis_status == 1 |
+  final_ast_hc_cf_dat$diagnosis_status == 0
 
 hc_mask = final_ast_hc_cf_dat$diagnosis == "HC"
 
