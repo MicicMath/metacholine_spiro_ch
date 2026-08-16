@@ -155,3 +155,9 @@ final_ast_hc_cf_dat$diagnosis_simple = ifelse(
   final_ast_hc_cf_dat$diagnosis
 )
 
+######
+# test
+######
+
+temp = final_ast_hc_cf_dat[final_ast_hc_cf_dat$diagnosis_status == 0, ]
+temp = temp[temp$metacholine_response %in% c("Low", "Mid", "High"), ]
