@@ -12,6 +12,15 @@ other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
+#########################
+# remove S2 normalization
+#########################
+
+# X = as.matrix(dat[, sensors])
+# X_clr = log(X) - rowMeans(log(X))
+# 
+# dat[, sensors] = X_clr
+
 ####
 # st
 ####
@@ -184,3 +193,46 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
 plt_s3_s7
 
 # ggsave("./plots/spider_plot_s3_s7.png", plt_s3_s7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
+
+######
+# test
+######
+
+# dat$S3_S7_logratio = log(dat$S3 / dat$S7)
+# 
+# aggregate(
+#   S3_S7_logratio ~ diagnosis_simple,
+#   data = dat,
+#   FUN = function(x) c(
+#     mean = mean(x),
+#     sd = sd(x),
+#     IQR = IQR(x)
+#   )
+# )
+# 
+# ggboxplot(
+#   dat,
+#   x = "diagnosis_simple",
+#   y = "S3_S7_logratio",
+#   add = "jitter"
+# )
+# 
+# intensity_sensors = c("S1", "S3", "S4", "S5", "S6", "S7")
+# 
+# pairs = combn(intensity_sensors, 2, simplify = FALSE)
+# 
+# ratio_variability = do.call(
+#   rbind,
+#   lapply(pairs, function(z) {
+# 
+#     lr = log(dat[[z[1]]] / dat[[z[2]]])
+# 
+#     data.frame(
+#       pair = paste(z, collapse = "/"),
+#       sd_HC = sd(lr[dat$diagnosis_simple == "HC"]),
+#       sd_AST = sd(lr[dat$diagnosis_simple == "AST"])
+#     )
+#   })
+# )
+# 
+# ratio_variability

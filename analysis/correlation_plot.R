@@ -12,6 +12,12 @@ other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
+#################
+# subset to group
+#################
+
+# dat = dat[dat$diagnosis_simple == "HC", , drop = FALSE]
+
 #####
 # cor
 #####
