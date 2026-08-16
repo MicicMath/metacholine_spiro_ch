@@ -12,6 +12,8 @@ other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
+table(dat$diagnosis_simple)
+
 #######
 # lasso
 #######

@@ -12,6 +12,8 @@ other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
+table(dat$diagnosis_simple)
+
 #########################
 # remove S2 normalization
 #########################
@@ -75,6 +77,8 @@ colnames(p_dat_format) = c(
   "Raw p-value",
   "Adjusted p-value"
 )
+
+p_dat_format
 
 # write.csv(p_dat_format, "./tables/univariate_results.csv", row.names = FALSE)
 

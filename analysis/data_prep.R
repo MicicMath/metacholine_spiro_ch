@@ -128,9 +128,8 @@ final_ast_hc_cf_dat$metacholine_response = factor(
 # diagnosis confirmed filter and only 1st visit
 ###############################################
 
-diag_confirmed_mask = !is.na(final_ast_hc_cf_dat$diagnosis_status) &
-  final_ast_hc_cf_dat$diagnosis_status == 1 |
-  final_ast_hc_cf_dat$diagnosis_status == 0
+# diag_confirmed_mask = !is.na(final_ast_hc_cf_dat$diagnosis_status) & (final_ast_hc_cf_dat$diagnosis_status %in% c(0, 1))
+diag_confirmed_mask = !is.na(final_ast_hc_cf_dat$diagnosis_status) & final_ast_hc_cf_dat$diagnosis_status == 1
 
 hc_mask = final_ast_hc_cf_dat$diagnosis == "HC"
 
