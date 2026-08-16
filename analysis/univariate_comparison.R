@@ -190,7 +190,7 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
   ) +
   theme_classic() +
   ggtheme_top_right
-plt_s3_s7
+# plt_s3_s7
 
 # ggsave("./plots/spider_plot_s3_s7.png", plt_s3_s7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
 
