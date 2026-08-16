@@ -76,6 +76,8 @@ colnames(p_dat_format) = c(
   "Adjusted p-value"
 )
 
+# write.csv(p_dat_format, "./tables/univariate_results.csv", row.names = FALSE)
+
 ####
 # bp
 ####
