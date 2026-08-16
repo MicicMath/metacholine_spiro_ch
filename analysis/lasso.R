@@ -52,7 +52,7 @@ y = ifelse(dat$diagnosis_simple == "AST", 1, 0)
 set.seed(101)
 bundle = train_test_split(X = X, y = y, K = 5, R = 100)
 
-results_lasso = lapply(
+results_lasso = mclapply(
   bundle,
   function(split) {
     X_train = split$X_train
@@ -90,7 +90,7 @@ results_lasso = lapply(
       x = X_train,
       y = y_train,
       family = "binomial",
-      type.measure = "deviance",
+      type.measure = "auc",
       weights = w_train,
       foldid = inner_foldid,
       alpha = 1,
@@ -119,7 +119,7 @@ results_lasso = lapply(
         y_pred = predicted
       )
     )
-  }
+  }, mc.cores = parallel::detectCores() - 2
 )
 
 #####################################
