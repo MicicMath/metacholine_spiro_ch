@@ -150,7 +150,7 @@ plt_sel_feat = ggplot(
 ) +
   geom_col(
     fill = "grey55",
-    width = 0.5
+    width = 0.6
   ) +
   geom_text(
     aes(label = sprintf("%.1f%%", pct)),
@@ -351,3 +351,181 @@ plt_final
 #   dpi = 400,
 #   bg = "white"
 # )
+
+##################
+# permutation test
+##################
+
+# X = as.matrix(dat[, sensors])
+# y = ifelse(dat$diagnosis_simple == "AST", 1, 0)
+# 
+# permutation_results = mclapply(
+#   1:1000,
+#   function(i) {
+#     print(paste0("Permutation: ", i))
+#     y_permuted = sample(y)
+# 
+#     bundle = train_test_split(X = X, y = y_permuted, K = 5, R = 1)
+# 
+#     results_lasso = lapply(
+#       bundle,
+#       function(split) {
+#         X_train = split$X_train
+#         y_train = split$y_train
+#         X_test = split$X_test
+#         y_test = split$y_test
+# 
+#         r = 0.5 # 0.5 is standard balance
+#         w_train = ifelse(y_train == 1,
+#           r * (1 / sum(y_train == 1)),
+#           (1 - r) * (1 / sum(y_train == 0))
+#         )
+# 
+#         w_train = w_train * (length(y_train) / sum(w_train))
+# 
+#         .make_foldid = function(v) {
+#           folds = caret::createFolds(
+#             factor(v, levels = c(1, 0)),
+#             k = 5,
+#             returnTrain = FALSE
+#           )
+# 
+#           foldid = rep(0, length(v))
+# 
+#           for (i in seq_along(folds)) {
+#             foldid[folds[[i]]] = i
+#           }
+# 
+#           return(foldid)
+#         }
+# 
+#         inner_foldid = .make_foldid(y_train)
+# 
+#         tuned_model = glmnet::cv.glmnet(
+#           x = X_train,
+#           y = y_train,
+#           type.measure = "deviance",
+#           weights = w_train,
+#           foldid = inner_foldid,
+#           alpha = 1,
+#           standardize = TRUE
+#         )
+# 
+#         probas = predict(tuned_model, newx = X_test, s = "lambda.1se")
+#         predicted = ifelse(probas > 0.5, 1, 0)
+#         coeffs = coef(tuned_model, s = "lambda.1se")
+# 
+#         matrix_coefs = as.matrix(coeffs)
+#         selected_features = rownames(matrix_coefs)[matrix_coefs[, 1] != 0]
+#         selected_features = setdiff(selected_features, "(Intercept)")
+# 
+#         y_pred_factor = factor(ifelse(predicted == 1, "AST", "HC"), levels = c("AST", "HC"))
+#         y_test_factor = factor(ifelse(y_test == 1, "AST", "HC"), levels = c("AST", "HC"))
+# 
+#         cm = caret::confusionMatrix(y_pred_factor, y_test_factor, positive = "AST")
+#         acc = cm$byClass[["Balanced Accuracy"]]
+# 
+#         pred = ROCR::prediction(as.numeric(probas), y_test)
+#         auc = ROCR::performance(pred, "auc")@y.values[[1]]
+# 
+#         return(
+#           list(
+#             auc = auc,
+#             acc = acc
+#           )
+#         )
+#       }
+#     )
+#   }, mc.cores = parallel::detectCores() - 2
+# )
+# 
+# perm_auc_dist = sapply(permutation_results, function(p) {
+#   mean(sapply(p, function(f) f$auc))
+# })
+# 
+# p_value_permutation = (sum(perm_auc_dist >= auc_estimate) + 1) / (length(perm_auc_dist) + 1)
+
+##################
+# ridge regression
+##################
+
+# results_ridge = lapply(
+#   bundle,
+#   function(split) {
+#     X_train = split$X_train
+#     y_train = split$y_train
+#     X_test = split$X_test
+#     y_test = split$y_test
+# 
+#     r = 0.5 # 0.5 is standard balance
+#     w_train = ifelse(y_train == 1,
+#       r * (1 / sum(y_train == 1)),
+#       (1 - r) * (1 / sum(y_train == 0))
+#     )
+# 
+#     w_train = w_train * (length(y_train) / sum(w_train))
+# 
+#     .make_foldid = function(y) {
+#       folds = caret::createFolds(
+#         factor(y, levels = c(1, 0)),
+#         k = 5,
+#         returnTrain = FALSE
+#       )
+# 
+#       foldid = rep(0, length(y))
+# 
+#       for (i in seq_along(folds)) {
+#         foldid[folds[[i]]] = i
+#       }
+# 
+#       return(foldid)
+#     }
+# 
+#     inner_foldid = .make_foldid(y_train)
+# 
+#     tuned_model = glmnet::cv.glmnet(
+#       x = X_train,
+#       y = y_train,
+#       type.measure = "deviance",
+#       weights = w_train,
+#       foldid = inner_foldid,
+#       alpha = 0,
+#       standardize = TRUE
+#     )
+# 
+#     probas = predict(tuned_model, newx = X_test, s = "lambda.1se")
+#     predicted = ifelse(probas > 0.5, 1, 0)
+#     coeffs = coef(tuned_model, s = "lambda.1se")
+# 
+#     matrix_coefs = as.matrix(coeffs)
+# 
+#     y_pred_factor = factor(ifelse(predicted == 1, "AST", "HC"), levels = c("AST", "HC"))
+#     y_test_factor = factor(ifelse(y_test == 1, "AST", "HC"), levels = c("AST", "HC"))
+# 
+#     cm = caret::confusionMatrix(y_pred_factor, y_test_factor, positive = "AST")
+#     acc = cm$byClass[["Balanced Accuracy"]]
+#     sen = cm$byClass[["Sensitivity"]]
+#     spec = cm$byClass[["Specificity"]]
+# 
+#     pred = ROCR::prediction(as.numeric(probas), y_test)
+#     auc = ROCR::performance(pred, "auc")@y.values[[1]]
+# 
+#     return(
+#       list(
+#         auc = auc,
+#         acc = acc,
+#         sen = sen,
+#         spec = spec
+#       )
+#     )
+#   }
+# )
+# 
+# auc_ridge = mean(unlist(lapply(results_ridge, function(x) x$auc)))
+# cat(sprintf("Ridge logistic regression AUC: %f\n", auc_ridge))
+# acc_ridge = mean(unlist(lapply(results_ridge, function(x) x$acc)))
+# cat(sprintf("Ridge logistic regression balanced accuracy: %f\n", acc_ridge))
+# sen_ridge = mean(unlist(lapply(results_ridge, function(x) x$sen)))
+# cat(sprintf("Ridge logistic regression sensitivity: %f\n", sen_ridge))
+# spec_ridge = mean(unlist(lapply(results_ridge, function(x) x$spec)))
+# cat(sprintf("Ridge logistic regression specificity: %f\n", spec_ridge))
