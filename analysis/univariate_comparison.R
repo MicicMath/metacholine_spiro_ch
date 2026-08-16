@@ -173,8 +173,8 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
     # color = "black",
     stroke = 0.5
   ) +
-  scale_color_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c("Asthma", "Healthy")) +
-  scale_fill_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c("Asthma", "Healthy")) +
+  scale_color_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c(AST = "Asthma", HC = "Healthy")) +
+  scale_fill_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c(AST = "Asthma", HC = "Healthy")) +
   labs(
     x = "S3 intensity [a.u.]",
     y = "S7 intensity [a.u.]"
