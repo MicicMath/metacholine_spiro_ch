@@ -89,6 +89,7 @@ results_lasso = lapply(
     tuned_model = glmnet::cv.glmnet(
       x = X_train,
       y = y_train,
+      family = "binomial",
       type.measure = "deviance",
       weights = w_train,
       foldid = inner_foldid,
@@ -96,7 +97,7 @@ results_lasso = lapply(
       standardize = TRUE
     )
 
-    probas = predict(tuned_model, newx = X_test, s = "lambda.1se")
+    probas = predict(tuned_model, newx = X_test, s = "lambda.1se", type = "response")
     predicted = ifelse(probas > 0.5, 1, 0)
     coeffs = coef(tuned_model, s = "lambda.1se")
 
@@ -404,6 +405,7 @@ plt_final
 #         tuned_model = glmnet::cv.glmnet(
 #           x = X_train,
 #           y = y_train,
+#           family = "binomial",
 #           type.measure = "deviance",
 #           weights = w_train,
 #           foldid = inner_foldid,
@@ -411,7 +413,7 @@ plt_final
 #           standardize = TRUE
 #         )
 # 
-#         probas = predict(tuned_model, newx = X_test, s = "lambda.1se")
+#         probas = predict(tuned_model, newx = X_test, s = "lambda.1se", type = "response")
 #         predicted = ifelse(probas > 0.5, 1, 0)
 #         coeffs = coef(tuned_model, s = "lambda.1se")
 # 
@@ -486,6 +488,7 @@ plt_final
 #     tuned_model = glmnet::cv.glmnet(
 #       x = X_train,
 #       y = y_train,
+#       family = "binomial",
 #       type.measure = "deviance",
 #       weights = w_train,
 #       foldid = inner_foldid,
@@ -493,7 +496,7 @@ plt_final
 #       standardize = TRUE
 #     )
 # 
-#     probas = predict(tuned_model, newx = X_test, s = "lambda.1se")
+#     probas = predict(tuned_model, newx = X_test, s = "lambda.1se", type = "response")
 #     predicted = ifelse(probas > 0.5, 1, 0)
 #     coeffs = coef(tuned_model, s = "lambda.1se")
 # 

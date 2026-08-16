@@ -35,6 +35,7 @@ packageManage(
   "cowplot",
   "ggpubr",
   "rstatix",
+  "reshape2",
   "ROCR"
 )
 
@@ -192,5 +193,4 @@ ggtheme_top_left = theme(
   axis.text.x = element_text(size = 11),
   axis.text.y = element_text(size = 11)
 )
-
 
