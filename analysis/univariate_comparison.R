@@ -36,7 +36,8 @@ w_test = mclapply(
     )
     rownames(d) = NULL
     d
-  }, mc.cores = parallel::detectCores() - 2
+  },
+  mc.cores = parallel::detectCores() - 2
 )
 w_test = do.call(rbind, w_test)
 
@@ -89,7 +90,7 @@ bps = lapply(
     ) +
       geom_point(
         data = dat, aes(x = diagnosis_simple, y = !!sym(x), fill = diagnosis_simple, color = diagnosis_simple),
-        size = 1.4,
+        size = 2.4,
         alpha = 0.5,
         position = position_jitter(w = 0.2)
       ) +
@@ -107,7 +108,7 @@ bps = lapply(
         pwc,
         label = "p.adj.str",
         tip.length = 0.01,
-        label.size = 2.5,
+        label.size = 3.5,
         hide.ns = TRUE
       ) +
       scale_y_continuous(
@@ -132,3 +133,54 @@ plt_bps = plot_grid(
 )
 plt_bps
 
+# ggsave("./plots/ast_hc_s3.png", bps$S3, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
+# ggsave("./plots/ast_hc_s7.png", bps$S7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
+
+#############
+# spider plot
+#############
+
+centers = aggregate(
+  cbind(S3, S7) ~ diagnosis_simple,
+  data = dat,
+  FUN = mean
+)
+
+dat_s3_s7 = merge(
+  dat,
+  centers,
+  by = "diagnosis_simple",
+  suffixes = c("", "_center")
+)
+
+plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
+  geom_segment(
+    aes(
+      x = S3_center,
+      y = S7_center,
+      xend = S3,
+      yend = S7,
+      color = diagnosis_simple
+    ),
+    alpha = 0.25,
+    linewidth = 0.4
+  ) +
+  geom_point(size = 2.4, alpha = 0.65) +
+  geom_point(
+    aes(x = S3_center, y = S7_center, fill = diagnosis_simple),
+    shape = 21,
+    size = 1,
+    # color = "black",
+    stroke = 0.5
+  ) +
+  scale_color_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c("Asthma", "Healthy")) +
+  scale_fill_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c("Asthma", "Healthy")) +
+  labs(
+    x = "S3 intensity [a.u.]",
+    y = "S7 intensity [a.u.]"
+  ) +
+  theme_classic() +
+  ggtheme_top_right
+plt_s3_s7
+
+# ggsave("./plots/spider_plot_s3_s7.png", plt_s3_s7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
