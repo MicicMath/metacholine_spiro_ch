@@ -16,6 +16,7 @@ packageManage(
   "ggrepel",
   "scales",
   "grid",
+  "rspiro",
   "glmnet",
   "parallel",
   "boot",

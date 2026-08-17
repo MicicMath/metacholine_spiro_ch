@@ -22,6 +22,10 @@ rdcp_exhal_dat = rdcp_dat[
   drop = FALSE
 ]
 
+#################################
+# calculate FEV1 and FVC z-scores
+#################################
+
 ###############################################
 # import eNose dat and filter by measurement id
 ###############################################
