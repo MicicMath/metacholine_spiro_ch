@@ -26,6 +26,25 @@ rdcp_exhal_dat = rdcp_dat[
 # calculate FEV1 and FVC z-scores
 #################################
 
+rdcp_exhal_dat$height_exhal = rdcp_exhal_dat$height_exhal / 100
+rdcp_exhal_dat$gender = ifelse(rdcp_exhal_dat$gender == 1, 2, 1) # reset 1 to male and 2 to female
+
+rdcp_exhal_dat$fev1_z = zscore_GLIgl(
+  age = rdcp_exhal_dat$age_exhal,
+  height = rdcp_exhal_dat$height_exhal,
+  gender = rdcp_exhal_dat$gender,
+  FEV1 = rdcp_exhal_dat$fev1
+)
+rdcp_exhal_dat$fev1_z = round(rdcp_exhal_dat$fev1_z, 2)
+
+rdcp_exhal_dat$fvc_z = pctpred_GLIgl(
+  age = rdcp_exhal_dat$age_exhal,
+  height = rdcp_exhal_dat$height_exhal,
+  gender = rdcp_exhal_dat$gender,
+  FVC = rdcp_exhal_dat$fvc
+)
+rdcp_exhal_dat$fvc_z = round(rdcp_exhal_dat$fvc_z, 2)
+
 ###############################################
 # import eNose dat and filter by measurement id
 ###############################################
@@ -79,7 +98,9 @@ cols = c(
   "diagnosis_status",
   sensors,
   "visit_exhal",
-  "metacholine_test_result"
+  "metacholine_test_result",
+  "fev1_z",
+  "fvc_z"
 )
 
 final_ast_hc_cf_dat = final_ast_hc_cf_dat[, cols]
