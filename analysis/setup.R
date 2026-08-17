@@ -18,6 +18,8 @@ packageManage(
   "grid",
   "rspiro",
   "glmnet",
+  "ranger",
+  "e1071",
   "parallel",
   "boot",
   "dplyr",
