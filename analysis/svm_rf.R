@@ -55,6 +55,148 @@ set.seed(101)
 bundle = train_test_split(X = X, y = y, K = 5, R = 100)
 
 #######
+# lasso
+#######
+
+results_lasso = mclapply(
+  bundle,
+  function(split) {
+    X_train = split$X_train
+    y_train = split$y_train
+    X_test = split$X_test
+    y_test = split$y_test
+
+    r = 0.5 # 0.5 is standard balance
+    w_train = ifelse(y_train == 1,
+      r * (1 / sum(y_train == 1)),
+      (1 - r) * (1 / sum(y_train == 0))
+    )
+
+    w_train = w_train * (length(y_train) / sum(w_train))
+
+    .make_foldid = function(y) {
+      folds = caret::createFolds(
+        factor(y, levels = c(1, 0)),
+        k = 5,
+        returnTrain = FALSE
+      )
+
+      foldid = rep(0, length(y))
+
+      for (i in seq_along(folds)) {
+        foldid[folds[[i]]] = i
+      }
+
+      return(foldid)
+    }
+
+    inner_foldid = .make_foldid(y_train)
+
+    tuned_model = glmnet::cv.glmnet(
+      x = X_train,
+      y = y_train,
+      family = "binomial",
+      type.measure = "auc",
+      weights = w_train,
+      foldid = inner_foldid,
+      alpha = 1,
+      standardize = TRUE
+    )
+
+    probas = predict(tuned_model, newx = X_test, s = "lambda.1se", type = "response")
+    predicted = ifelse(probas > 0.5, 1, 0)
+    coeffs = coef(tuned_model, s = "lambda.1se")
+
+    matrix_coefs = as.matrix(coeffs)
+    selected_features = rownames(matrix_coefs)[matrix_coefs[, 1] != 0]
+    selected_features = setdiff(selected_features, "(Intercept)")
+
+    y_pred_factor = factor(ifelse(predicted == 1, "AST", "HC"), levels = c("AST", "HC"))
+    y_test_factor = factor(ifelse(y_test == 1, "AST", "HC"), levels = c("AST", "HC"))
+
+    cm = caret::confusionMatrix(y_pred_factor, y_test_factor, positive = "AST")
+
+    return(
+      list(
+        cm = cm,
+        selected_features = selected_features,
+        y_test = y_test,
+        y_proba = probas,
+        y_pred = predicted
+      )
+    )
+  }, mc.cores = parallel::detectCores() - 2
+)
+
+#####################
+# results performance
+#####################
+
+auc_distribution = sapply(
+  results_lasso,
+  function(x) {
+    pred = ROCR::prediction(as.numeric(x$y_proba), x$y_test)
+    ROCR::performance(pred, "auc")@y.values[[1]]
+  }
+)
+
+auc_estimate = mean(auc_distribution)
+
+acc_distribution = sapply(
+  results_lasso,
+  function(x) {
+    x$cm$byClass[["Balanced Accuracy"]]
+  }
+)
+
+acc_estimate = mean(acc_distribution)
+
+sen_distribution = sapply(
+  results_lasso,
+  function(x) {
+    x$cm$byClass[["Sensitivity"]]
+  }
+)
+
+sen_estimate = mean(sen_distribution)
+
+spc_distribution = sapply(
+  results_lasso,
+  function(x) {
+    x$cm$byClass[["Specificity"]]
+  }
+)
+
+spc_estimate = mean(spc_distribution)
+
+perf_dat = data.frame(
+  metric = c("AUC", "Balanced accuracy", "Sensitivity", "Specificity"),
+  value = c(auc_estimate, 100 * acc_estimate, 100 * sen_estimate, 100 * spc_estimate),
+  sds = c(sd(auc_distribution), sd(acc_distribution * 100), sd(sen_distribution * 100), sd(spc_distribution * 100)),
+  algorithm = "LASSO"
+)
+
+perf_dat$value_format = sapply(
+  seq_along(perf_dat$value),
+  function(i) {
+    x = perf_dat$value[i]
+    y = perf_dat$sds[i]
+    name = perf_dat$metric[i]
+    if (name == "AUC") {
+      res = sprintf("%.2f", x)
+      std = sprintf("%.3f", y)
+      return(paste0(res, " (SD ", std, ")"))
+    } else {
+      res = paste0(sprintf("%.1f", x), "%")
+      std = sprintf("%.1f", y)
+      return(paste0(res, " (SD ", std, ")"))
+    }
+  }
+)
+
+perf_dat_lasso = perf_dat
+
+#######
 # svm
 #######
 
@@ -274,7 +416,8 @@ perf_dat = data.frame(
     sd(acc_distribution * 100),
     sd(sen_distribution * 100),
     sd(spc_distribution * 100)
-  )
+  ),
+  algorithm = "SVM (linear)"
 )
 
 perf_dat$value_format = sapply(
@@ -296,7 +439,7 @@ perf_dat$value_format = sapply(
   }
 )
 
-perf_dat
+perf_dat_svm = perf_dat
 
 ####################
 # tuning parameters
@@ -525,7 +668,8 @@ perf_dat = data.frame(
     sd(acc_distribution * 100),
     sd(sen_distribution * 100),
     sd(spc_distribution * 100)
-  )
+  ),
+  algorithm = "RF"
 )
 
 perf_dat$value_format = sapply(
@@ -547,7 +691,7 @@ perf_dat$value_format = sapply(
   }
 )
 
-perf_dat
+perf_dat_rf = perf_dat
 
 ####################
 # tuning parameters
@@ -559,3 +703,11 @@ perf_dat
 # )
 # 
 # table(best_num_trees)
+
+#############
+# all results
+#############
+
+all_results = do.call(rbind, list(perf_dat_lasso, perf_dat_svm, perf_dat_rf))
+all_results = all_results[, c("metric", "value_format", "algorithm")]
+all_results
