@@ -48,8 +48,8 @@ train_test_split = function(X, y, K = 5, R = 100) {
   return(splits_bundle)
 }
 
-X_dat = dat[, sensors, drop = FALSE]
-y_dat = ifelse(dat$diagnosis_simple == "AST", 1, 0)
+X = as.matrix(dat[, sensors])
+y = ifelse(dat$diagnosis_simple == "AST", 1, 0)
 
 set.seed(101)
 bundle = train_test_split(X = X, y = y, K = 5, R = 100)
@@ -57,12 +57,6 @@ bundle = train_test_split(X = X, y = y, K = 5, R = 100)
 #######
 # svm
 #######
-
-X = as.matrix(dat[, sensors])
-y = ifelse(dat$diagnosis_simple == "AST", 1, 0)
-
-set.seed(101)
-bundle = train_test_split(X = X, y = y, K = 5, R = 100)
 
 results_svm = mclapply(
   bundle,
