@@ -7,7 +7,7 @@ dat = dat[!(dat$diagnosis %in% c("PCD", "CF")), , drop = FALSE]
 # restrict to mid and high metacholine response only for asthma
 ###############################################################
 
-mid_high_metach_response_mask = dat$metacholine_response %in% c("Mid", "High")
+mid_high_metach_response_mask = dat$metacholine_response %in% c("Low", "Mid", "High")
 other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
@@ -75,7 +75,7 @@ plt_hc_bps
 ##############
 
 X_pca = prcomp(
-  as.matrix(dat[, sensors]),
+  as.matrix(hc_dat[, sensors]),
   center = TRUE,
   scale. = TRUE
 )
@@ -84,8 +84,8 @@ pca_importance = as.data.frame(summary(X_pca)$importance)
 
 pca_dat = data.frame(
   X_pca$x,
-  m_id = dat$m_id,
-  batch = dat$batch
+  m_id = hc_dat$m_id,
+  batch = hc_dat$batch
 )
 
 pc1_lab = paste0("PC1 ", round(pca_importance$PC1[2] * 100, 1), "%")
@@ -417,6 +417,6 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
 # 
 # ratio_variability
 
-plot_grid(
-  plt_hc_bps, plt_bps
-)
+# plot_grid(
+#   plt_hc_bps, plt_bps
+# )
