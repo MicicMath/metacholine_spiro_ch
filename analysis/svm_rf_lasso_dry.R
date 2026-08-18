@@ -1,5 +1,7 @@
 source("./data_prep.R")
 
+tm = Sys.time()
+
 dat = final_ast_hc_cf_dat
 dat = dat[dat$diagnosis != "CF", , drop = FALSE]
 
@@ -46,6 +48,62 @@ train_test_split = function(X, y, K = 5, R = 100) {
     }
   )
   return(splits_bundle)
+}
+
+perf_report = function(per_fold_results, model_name) {
+  auc_distribution = sapply(
+    per_fold_results,
+    function(x) {
+      pred = ROCR::prediction(as.numeric(x$y_proba), x$y_test)
+      ROCR::performance(pred, "auc")@y.values[[1]]
+    }
+  )
+
+  auc_estimate = mean(auc_distribution)
+
+  acc_distribution = sapply(
+    per_fold_results,
+    function(x) {
+      x$cm$byClass[["Balanced Accuracy"]]
+    }
+  )
+
+  acc_estimate = mean(acc_distribution)
+
+  sen_distribution = sapply(
+    per_fold_results,
+    function(x) {
+      x$cm$byClass[["Sensitivity"]]
+    }
+  )
+
+  sen_estimate = mean(sen_distribution)
+
+  spc_distribution = sapply(
+    per_fold_results,
+    function(x) {
+      x$cm$byClass[["Specificity"]]
+    }
+  )
+
+  spc_estimate = mean(spc_distribution)
+
+  res = data.frame(
+    model = model_name,
+    auc = paste0(sprintf("%.2f", auc_estimate), " (SD ", sprintf("%.2f", sd(auc_distribution)), ")"),
+    acc = paste0(sprintf("%.1f", acc_estimate * 100), "%", " (SD ", sprintf("%.1f", sd(acc_distribution * 100)), ")"),
+    sen = paste0(sprintf("%.1f", sen_estimate * 100), "%", " (SD ", sprintf("%.1f", sd(sen_distribution * 100)), ")"),
+    spc = paste0(sprintf("%.1f", spc_estimate * 100), "%", " (SD ", sprintf("%.1f", sd(spc_distribution * 100)), ")")
+  )
+  colnames(res) = c(
+    "Model",
+    "AUC",
+    "Balanced accuracy",
+    "Sensitivity",
+    "Specificity"
+  )
+  res
+
 }
 
 X = as.matrix(dat[, sensors])
@@ -708,6 +766,11 @@ perf_dat_rf = perf_dat
 # all results
 #############
 
-all_results = do.call(rbind, list(perf_dat_lasso, perf_dat_svm, perf_dat_rf))
-all_results = all_results[, c("metric", "value_format", "algorithm")]
-all_results
+perf_lasso = perf_report(results_lasso, "LASSO")
+perf_svm = perf_report(results_svm, "SVM")
+perf_rf = perf_report(results_rf, "RF")
+
+results_all = do.call(rbind, list(perf_lasso, perf_svm, perf_rf))
+results_all
+
+tm = Sys.time() - tm
