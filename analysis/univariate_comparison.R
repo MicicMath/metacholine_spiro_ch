@@ -47,8 +47,8 @@ hc_bps = lapply(
         alpha = 0.5,
         position = position_jitter(w = 0.2)
       ) +
-      scale_color_manual(values = c("#CC6677", "#4477AA"), name = NULL) +
-      scale_fill_manual(values = c("#CC6677", "#4477AA"), name = NULL) +
+      scale_color_manual(values = c("#228833", "#AA3377"), name = NULL) +
+scale_fill_manual(values = c("#228833", "#AA3377"), name = NULL) +
       stat_pvalue_manual(
         pwc,
         label = "p.adj.str",
@@ -69,6 +69,118 @@ names(hc_bps) = sensors
 
 plt_hc_bps = plot_grid(plotlist = hc_bps, ncol = 4, align = "hv")
 plt_hc_bps
+
+##############
+# pca hc batch
+##############
+
+X_pca = prcomp(
+  as.matrix(dat[, sensors]),
+  center = TRUE,
+  scale. = TRUE
+)
+
+pca_importance = as.data.frame(summary(X_pca)$importance)
+
+pca_dat = data.frame(
+  X_pca$x,
+  m_id = dat$m_id,
+  batch = dat$batch
+)
+
+pc1_lab = paste0("PC1 ", round(pca_importance$PC1[2] * 100, 1), "%")
+pc2_lab = paste0("PC2 ", round(pca_importance$PC2[2] * 100, 1), "%")
+pc3_lab = paste0("PC3 ", round(pca_importance$PC3[2] * 100, 1), "%")
+pc4_lab = paste0("PC4 ", round(pca_importance$PC4[2] * 100, 1), "%")
+
+# diagnosis_colors = c(
+#   HC  = "#4477AA",
+#   AST = "#CC6677",
+#   AST_AL = "#CC6677",
+#   AST_NOAL = "#DDCC77"
+# )
+
+pca_by_batch_1 = ggplot(
+  pca_dat,
+  aes(x = PC1, y = PC2, color = batch)
+) +
+  geom_hline(yintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  geom_vline(xintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  stat_ellipse(aes(group = batch), show.legend = FALSE, linewidth = 0.5) +
+  geom_point(size = 2.4, alpha = 0.75) +
+  # scale_color_manual(values = diagnosis_colors) +
+  labs(
+    title = "PCA scores by batch",
+    x = pc1_lab,
+    y = pc2_lab,
+    color = "Batch"
+  ) +
+  theme_classic() +
+  ggtheme_top_right
+
+pca_by_batch_2 = ggplot(
+  pca_dat,
+  aes(x = PC1, y = PC3, color = batch)
+) +
+  geom_hline(yintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  geom_vline(xintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  stat_ellipse(aes(group = batch), show.legend = FALSE, linewidth = 0.5) +
+  geom_point(size = 2.4, alpha = 0.75) +
+  # scale_color_manual(values = diagnosis_colors) +
+  labs(
+    title = "PCA scores by batch",
+    x = pc1_lab,
+    y = pc3_lab,
+    color = "Batch"
+  ) +
+  theme_classic() +
+  ggtheme_top_right
+
+pca_by_batch_2b = ggplot(
+  pca_dat,
+  aes(x = PC2, y = PC3, color = batch)
+) +
+  geom_hline(yintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  geom_vline(xintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  stat_ellipse(aes(group = batch), show.legend = FALSE, linewidth = 0.5) +
+  geom_point(size = 2.4, alpha = 0.75) +
+  # scale_color_manual(values = diagnosis_colors) +
+  labs(
+    title = "PCA scores by batch",
+    x = pc2_lab,
+    y = pc3_lab,
+    color = "Batch"
+  ) +
+  theme_classic() +
+  ggtheme_top_right
+
+pca_by_batch_3 = ggplot(
+  pca_dat,
+  aes(x = PC1, y = PC4, color = batch)
+) +
+  geom_hline(yintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  geom_vline(xintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+  stat_ellipse(aes(group = batch), show.legend = FALSE, linewidth = 0.5) +
+  geom_point(size = 2.4, alpha = 0.75) +
+  # scale_color_manual(values = diagnosis_colors) +
+  labs(
+    title = "PCA scores by batch",
+    x = pc1_lab,
+    y = pc4_lab,
+    color = "Batch"
+  ) +
+  theme_classic() +
+  ggtheme_top_right
+
+plt_pca_hc = cowplot::plot_grid(
+  pca_by_batch_1,
+  pca_by_batch_2,
+  pca_by_batch_2b,
+  pca_by_batch_3,
+  nrow = 2,
+  align = "hv"
+)
+plt_pca_hc
 
 #####################
 # restrict to batch 2
@@ -304,3 +416,7 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
 # )
 # 
 # ratio_variability
+
+plot_grid(
+  plt_hc_bps, plt_bps
+)
