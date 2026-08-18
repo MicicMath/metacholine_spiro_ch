@@ -58,6 +58,9 @@ colnames(e_dat_1)[colnames(e_dat_1) == "id"] = "m_id"
 e_dat_0 = e_dat_0[e_dat_0$m_id %in% rdcp_exhal_dat$m_id, ]
 e_dat_1 = e_dat_1[e_dat_1$m_id %in% rdcp_exhal_dat$m_id, ]
 
+e_dat_0$batch = "batch_20260105"
+e_dat_1$batch = "batch_20260808"
+
 ########################
 # merge with REDCap data
 ########################
@@ -100,7 +103,8 @@ cols = c(
   "visit_exhal",
   "metacholine_test_result",
   "fev1_z",
-  "fvc_z"
+  "fvc_z",
+  "batch"
 )
 
 final_ast_hc_cf_dat = final_ast_hc_cf_dat[, cols]

@@ -14,6 +14,12 @@ dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
 table(dat$diagnosis_simple)
 
+#####################
+# restrict to batch 2
+#####################
+
+# dat = dat[dat$batch == "batch_20260808", , drop = FALSE]
+
 #######
 # lasso
 #######

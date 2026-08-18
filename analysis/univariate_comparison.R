@@ -12,7 +12,69 @@ other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
 
-table(dat$diagnosis_simple)
+table(dat$diagnosis_simple, dat$batch)
+
+hc_tests = sapply(sensors, function(s) {
+  wilcox.test(dat[[s]][dat$diagnosis_simple == "HC" & dat$batch == "batch_20260105"],
+              dat[[s]][dat$diagnosis_simple == "HC" & dat$batch == "batch_20260808"])$p.value
+})
+
+hc_dat = dat[dat$diagnosis_simple == "HC", ]
+
+hc_p_adj = p.adjust(hc_tests, method = "fdr")
+names(hc_p_adj) = sensors
+
+hc_bps = lapply(
+  sensors,
+  function(x) {
+    pwc = data.frame(
+      group1 = "batch_20260105",
+      group2 = "batch_20260808",
+      y.position = max(hc_dat[[x]], na.rm = TRUE) * 1.1,
+      p.adj = as.numeric(hc_p_adj[x]),
+      p.adj.str = p_rnd(hc_p_adj[x])
+    )
+    bp = ggboxplot(hc_dat,
+      x = "batch", y = x,
+      width = 0.5,
+      fill = "white",
+      linewidth = 0.4,
+      alpha = 0.1, legend = "none", outlier.shape = NA
+    ) +
+      geom_point(
+        data = hc_dat, aes(x = batch, y = !!sym(x), fill = batch, color = batch),
+        size = 2.4,
+        alpha = 0.5,
+        position = position_jitter(w = 0.2)
+      ) +
+      scale_color_manual(values = c("#CC6677", "#4477AA"), name = NULL) +
+      scale_fill_manual(values = c("#CC6677", "#4477AA"), name = NULL) +
+      stat_pvalue_manual(
+        pwc,
+        label = "p.adj.str",
+        tip.length = 0.01,
+        label.size = 3.5,
+        hide.ns = TRUE
+      ) +
+      scale_y_continuous(expand = expansion(mult = c(0.05, 0.1))) +
+      labs(subtitle = paste0("Sensor: ", x)) +
+      xlab("") +
+      ylab("Intensity [a.u.]") +
+      theme_classic() +
+      ggtheme_no_legend
+    bp
+  }
+)
+names(hc_bps) = sensors
+
+plt_hc_bps = plot_grid(plotlist = hc_bps, ncol = 4, align = "hv")
+plt_hc_bps
+
+#####################
+# restrict to batch 2
+#####################
+
+# dat = dat[dat$batch == "batch_20260808", , drop = FALSE]
 
 #########################
 # remove S2 normalization
