@@ -99,6 +99,7 @@ cols = c(
   "patient_id",
   "m_id",
   "diagnosis",
+  "asthma_source",
   "diagnosis_status",
   sensors,
   "visit_exhal",
