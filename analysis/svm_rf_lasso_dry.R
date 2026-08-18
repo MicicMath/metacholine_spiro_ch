@@ -9,7 +9,7 @@ dat = dat[!(dat$diagnosis %in% c("PCD", "CF")), , drop = FALSE]
 # restrict to mid and high metacholine response only for asthma
 ###############################################################
 
-mid_high_metach_response_mask = dat$metacholine_response %in% c("Mid", "High")
+mid_high_metach_response_mask = dat$metacholine_response %in% c("Low", "Mid", "High")
 other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
