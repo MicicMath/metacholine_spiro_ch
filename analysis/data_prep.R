@@ -17,7 +17,8 @@ rdcp_exhal_dat = rdcp_dat[
       "HC",
       "PUL_ASTHMA_ALLERGIC",
       "PUL_ASTHMA_NONALLERGIC",
-      "PUL_CF"
+      "PUL_CF",
+      "PUL_PCD"
     ), ,
   drop = FALSE
 ]
@@ -119,7 +120,10 @@ final_ast_hc_cf_dat$diagnosis = ifelse(
   ifelse(final_ast_hc_cf_dat$diagnosis == "PUL_ASTHMA_NONALLERGIC",
     "AST_NOAL",
     ifelse(final_ast_hc_cf_dat$diagnosis == "PUL_CF",
-      "CF", "HC"
+      "CF",
+      ifelse(final_ast_hc_cf_dat$diagnosis == "PUL_PCD",
+        "PCD", "HC"
+      )
     )
   )
 )

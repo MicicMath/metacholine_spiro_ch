@@ -6,7 +6,7 @@ dat = final_ast_hc_cf_dat
 # restrict to mid and high metacholine response only for asthma
 ###############################################################
 
-mid_high_metach_response_mask = dat$metacholine_response %in% c("Mid", "High")
+mid_high_metach_response_mask = dat$metacholine_response %in% c("Low", "Mid", "High")
 other_mask = dat$diagnosis_simple != "AST"
 
 dat = dat[mid_high_metach_response_mask | other_mask, , drop = FALSE]
@@ -76,7 +76,8 @@ rownames(dunn_post_hoc) = NULL
 color_alt = c(
   "#CC6677",
   "#AA4499",
-  "#4477AA"
+  "#4477AA",
+  "#EE7733"
 )
 
 bp_plots = function(res, dat, sensor, p_adj) {

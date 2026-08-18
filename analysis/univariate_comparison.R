@@ -1,7 +1,7 @@
 source("./data_prep.R")
 
 dat = final_ast_hc_cf_dat
-dat = dat[dat$diagnosis != "CF", , drop = FALSE]
+dat = dat[!(dat$diagnosis %in% c("PCD", "CF")), , drop = FALSE]
 
 ###############################################################
 # restrict to mid and high metacholine response only for asthma
