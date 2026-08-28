@@ -150,7 +150,7 @@ pca_plot = function(data, comp1 = "PC1", comp2 = "PC2", title) {
     geom_hline(yintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
     geom_vline(xintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
     # stat_ellipse(aes(group = batch), show.legend = FALSE, linewidth = 0.5) +
-    geom_point(size = 2.4, alpha = 0.75) +
+    geom_point(shape = 21, size = 3.4, alpha = 0.75, stroke = 1) +
     # scale_color_manual(values = diagnosis_colors) +
     labs(
       title = paste0("PCA scores ", title),
