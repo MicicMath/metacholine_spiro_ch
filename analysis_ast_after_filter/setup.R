@@ -13,6 +13,7 @@ packageManage = function(...) {
 packageManage(
   "ggplot2",
   "gridExtra",
+  "effsize",
   "ggrepel",
   "scales",
   "grid",

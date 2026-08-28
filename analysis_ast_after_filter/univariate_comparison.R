@@ -9,8 +9,10 @@ dat = final_ast_hc_cf_dat
 table(dat$diagnosis_simple, dat$batch)
 
 hc_tests = sapply(sensors, function(s) {
-  wilcox.test(dat[[s]][dat$diagnosis_simple == "HC" & dat$batch == "batch_20260105"],
-              dat[[s]][dat$diagnosis_simple == "HC" & dat$batch == "batch_20260808"])$p.value
+  wilcox.test(
+    dat[[s]][dat$diagnosis_simple == "HC" & dat$batch == "batch_20260105"],
+    dat[[s]][dat$diagnosis_simple == "HC" & dat$batch == "batch_20260808"]
+  )$p.value
 })
 
 hc_dat = dat[dat$diagnosis_simple == "HC", ]
@@ -42,7 +44,7 @@ hc_bps = lapply(
         position = position_jitter(w = 0.2)
       ) +
       scale_color_manual(values = c("#228833", "#AA3377"), name = NULL) +
-scale_fill_manual(values = c("#228833", "#AA3377"), name = NULL) +
+      scale_fill_manual(values = c("#228833", "#AA3377"), name = NULL) +
       stat_pvalue_manual(
         pwc,
         label = "p.adj.str",
@@ -188,7 +190,7 @@ plt_pca_hc
 
 # X = as.matrix(dat[, sensors])
 # X_clr = log(X) - rowMeans(log(X))
-# 
+#
 # dat[, sensors] = X_clr
 
 ####
@@ -201,6 +203,7 @@ w_test = mclapply(
     ast = dat[dat$diagnosis_simple == "AST", x]
     hc = dat[dat$diagnosis_simple == "HC", x]
     w = wilcox.test(ast, hc, conf.int = TRUE)
+    cliff = cliff.delta(ast, hc, conf.level = 0.95)
     d = data.frame(
       sensor = x,
       diff_cf_vs_hc_ci = paste0(
@@ -209,6 +212,14 @@ w_test = mclapply(
         n_rnd(w$conf.int[[1]], 2),
         ", ",
         n_rnd(w$conf.int[[2]], 2),
+        ")"
+      ),
+      cliffs_delta_ci = paste0(
+        n_rnd(cliff$estimate, 2),
+        " (",
+        n_rnd(cliff$conf.int[[1]], 2),
+        ", ",
+        n_rnd(cliff$conf.int[[2]], 2),
         ")"
       ),
       p_val = w$p.value
@@ -228,20 +239,10 @@ p_dat_format = w_test
 p_dat_format$p_val = p_rnd(p_dat_format$p_val)
 p_dat_format$p_adj = p_rnd(p_dat_format$p_adj)
 
-# p_dat_format[
-#   ,
-#   c(
-#     "sensor",
-#     "diff_cf_vs_hc_ci_base",
-#     "p_adj_base",
-#     "diff_cf_vs_hc_ci_end",
-#     "p_adj_end"
-#   )
-# ]
-
 colnames(p_dat_format) = c(
   "Sensor",
   "Est. difference (95% CI)",
+  "Cliff's delta",
   "Raw p-value",
   "Adjusted p-value"
 )
@@ -323,48 +324,73 @@ plt_bps
 # spider plot
 #############
 
-centers = aggregate(
-  cbind(S3, S7) ~ diagnosis_simple,
-  data = dat,
-  FUN = mean
-)
+plot_sensor_pair = function(dat, sensor_x, sensor_y) {
+  centers = aggregate(
+    dat[c(sensor_x, sensor_y)],
+    by = list(diagnosis_simple = dat$diagnosis_simple),
+    FUN = mean
+  )
 
-dat_s3_s7 = merge(
-  dat,
-  centers,
-  by = "diagnosis_simple",
-  suffixes = c("", "_center")
-)
+  names(centers)[names(centers) == sensor_x] = paste0(sensor_x, "_center")
+  names(centers)[names(centers) == sensor_y] = paste0(sensor_y, "_center")
 
-plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
-  geom_segment(
+  dat_plot = merge(
+    dat,
+    centers,
+    by = "diagnosis_simple"
+  )
+
+  x_center = paste0(sensor_x, "_center")
+  y_center = paste0(sensor_y, "_center")
+
+  ggplot(
+    dat_plot,
     aes(
-      x = S3_center,
-      y = S7_center,
-      xend = S3,
-      yend = S7,
+      x = .data[[sensor_x]],
+      y = .data[[sensor_y]],
       color = diagnosis_simple
-    ),
-    alpha = 0.25,
-    linewidth = 0.4
+    )
   ) +
-  geom_point(size = 2.4, alpha = 0.65) +
-  geom_point(
-    aes(x = S3_center, y = S7_center, fill = diagnosis_simple),
-    shape = 21,
-    size = 1,
-    # color = "black",
-    stroke = 0.5
-  ) +
-  scale_color_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c(AST = "Asthma", HC = "Healthy")) +
-  scale_fill_manual(values = c(AST = "#CC6677", HC = "#4477AA"), labels = c(AST = "Asthma", HC = "Healthy")) +
-  labs(
-    x = "S3 intensity [a.u.]",
-    y = "S7 intensity [a.u.]"
-  ) +
-  theme_classic() +
-  ggtheme_top_right
-# plt_s3_s7
+    geom_segment(
+      aes(
+        x = .data[[x_center]],
+        y = .data[[y_center]],
+        xend = .data[[sensor_x]],
+        yend = .data[[sensor_y]],
+        color = diagnosis_simple
+      ),
+      alpha = 0.25,
+      linewidth = 0.4
+    ) +
+    geom_point(size = 2.4, alpha = 0.65) +
+    geom_point(
+      aes(
+        x = .data[[x_center]],
+        y = .data[[y_center]],
+        fill = diagnosis_simple
+      ),
+      shape = 21,
+      size = 1,
+      stroke = 0.5
+    ) +
+    scale_color_manual(
+      values = c(AST = "#CC6677", HC = "#4477AA"),
+      labels = c(AST = "Asthma", HC = "Healthy")
+    ) +
+    scale_fill_manual(
+      values = c(AST = "#CC6677", HC = "#4477AA"),
+      labels = c(AST = "Asthma", HC = "Healthy")
+    ) +
+    labs(
+      x = paste0(sensor_x, " intensity [a.u.]"),
+      y = paste0(sensor_y, " intensity [a.u.]")
+    ) +
+    theme_classic() +
+    ggtheme_top_right
+}
+
+plt_s3_s7 = plot_sensor_pair(dat, "S7", "S3")
+plt_s3_s7
 
 # ggsave("./plots/spider_plot_s3_s7.png", plt_s3_s7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
 
@@ -373,7 +399,7 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
 ######
 
 # dat$S3_S7_logratio = log(dat$S3 / dat$S7)
-# 
+#
 # aggregate(
 #   S3_S7_logratio ~ diagnosis_simple,
 #   data = dat,
@@ -383,24 +409,24 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
 #     IQR = IQR(x)
 #   )
 # )
-# 
+#
 # ggboxplot(
 #   dat,
 #   x = "diagnosis_simple",
 #   y = "S3_S7_logratio",
 #   add = "jitter"
 # )
-# 
+#
 # intensity_sensors = c("S1", "S3", "S4", "S5", "S6", "S7")
-# 
+#
 # pairs = combn(intensity_sensors, 2, simplify = FALSE)
-# 
+#
 # ratio_variability = do.call(
 #   rbind,
 #   lapply(pairs, function(z) {
-# 
+#
 #     lr = log(dat[[z[1]]] / dat[[z[2]]])
-# 
+#
 #     data.frame(
 #       pair = paste(z, collapse = "/"),
 #       sd_HC = sd(lr[dat$diagnosis_simple == "HC"]),
@@ -408,7 +434,7 @@ plt_s3_s7 = ggplot(dat_s3_s7, aes(x = S3, y = S7, color = diagnosis_simple)) +
 #     )
 #   })
 # )
-# 
+#
 # ratio_variability
 
 # plot_grid(
