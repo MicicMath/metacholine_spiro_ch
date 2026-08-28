@@ -14,47 +14,60 @@ dat = final_ast_hc_cf_dat
 
 M = cor(dat[, sensors], use = "pairwise.complete.obs")
 
-hc = hclust(dist(1 - M), method = "average")
-ord = hc$order
+cor_plot = function(data, title) {
+  M = cor(data, use = "pairwise.complete.obs")
+  hc = hclust(dist(1 - M), method = "average")
+  ord = hc$order
 
-# M = M[ord, ord]
+  M_long = reshape2::melt(M)
 
-M_long = reshape2::melt(M)
+  M_long = M_long[
+    as.numeric(M_long$Var1) < as.numeric(M_long$Var2),
+  ]
 
-M_long = M_long[
-  as.numeric(M_long$Var1) < as.numeric(M_long$Var2),
-]
+  plt_cor = ggplot(M_long, aes(x = Var1, y = Var2, fill = value)) +
+    geom_tile(color = "white", linewidth = 1) +
+    
+    geom_text(
+      aes(label = sprintf("%.2f", value)),
+      size = 3,
+      color = "black"
+    ) +
+    
+    scale_fill_gradient2(
+      low = "#BB4444",
+      mid = "#FFFFFF",
+      high = "#4477AA",
+      midpoint = 0,
+      limits = c(-1, 1),
+      name = "Correlation"
+    ) +
+    
+    # coord_fixed() +
+    scale_x_discrete(position = "top") +
 
-plt_cor = ggplot(M_long, aes(x = Var1, y = Var2, fill = value)) +
-  geom_tile(color = "white", linewidth = 1) +
-  
-  geom_text(
-    aes(label = sprintf("%.2f", value)),
-    size = 3,
-    color = "black"
-  ) +
-  
-  scale_fill_gradient2(
-    low = "#BB4444",
-    mid = "#FFFFFF",
-    high = "#4477AA",
-    midpoint = 0,
-    limits = c(-1, 1),
-    name = "Correlation"
-  ) +
-  
-  coord_fixed() +
-  scale_x_discrete(position = "top") +
-  
-  theme_minimal(base_size = 12) +
-  theme(
-    # legend.position = "bottom",
-    axis.title = element_blank(),
-    panel.grid = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = .5, vjust = 1),
-    axis.text.y = element_text()
-  )
-plt_cor
+    labs(title = title) +
+    
+    theme_minimal(base_size = 12) +
+    theme(
+      # legend.position = "bottom",
+      axis.title = element_blank(),
+      panel.grid = element_blank(),
+      # axis.text.x = element_text(angle = 45, hjust = .5, vjust = 1),
+      axis.text.x = element_text(),
+      axis.text.y = element_text()
+    )
+
+  plt_cor
+}
+
+plt_cor_1 = cor_plot(dat[dat$diagnosis_simple == "AST", sensors], "Asthma group")
+plt_cor_2 = cor_plot(dat[dat$diagnosis_simple == "HC", sensors], "Healthy controls")
+
+plot_grid(
+  plt_cor_1,
+  plt_cor_2
+)
 
 #############################################
 # permutation test between asthma and healthy
