@@ -2,9 +2,9 @@ source("./data_prep.R")
 
 dat = final_ast_hc_cf_dat
 
-###############################################################
-# restrict to mid and high metacholine response only for asthma
-###############################################################
+#########################
+# inspect HC batch signal
+#########################
 
 table(dat$diagnosis_simple, dat$batch)
 
@@ -206,7 +206,7 @@ w_test = mclapply(
     cliff = cliff.delta(ast, hc, conf.level = 0.95)
     d = data.frame(
       sensor = x,
-      diff_cf_vs_hc_ci = paste0(
+      diff_ast_vs_hc_ci = paste0(
         n_rnd(w$estimate, 2),
         " (",
         n_rnd(w$conf.int[[1]], 2),
