@@ -6,7 +6,7 @@ dat = final_ast_hc_cf_dat
 # subset to group
 #################
 
-# dat = dat[dat$diagnosis_simple == "HC", , drop = FALSE]
+# dat = dat[dat$diagnosis_simple == "AST", , drop = FALSE]
 
 #####
 # cor
@@ -56,12 +56,55 @@ plt_cor = ggplot(M_long, aes(x = Var1, y = Var2, fill = value)) +
   )
 plt_cor
 
-########
-# hclust
-########
+#############################################
+# permutation test between asthma and healthy
+#############################################
 
-M = cor(dat[, sensors], use = "pairwise.complete.obs")
-d = as.dist(1 - abs(M))
-hc = hclust(d, method = "complete")
+M_ast = cor(
+  dat[dat$diagnosis_simple == "AST", sensors],
+  use = "pairwise.complete.obs"
+)
 
-plot(hc)
+M_hc = cor(
+  dat[dat$diagnosis_simple == "HC", sensors],
+  use = "pairwise.complete.obs"
+)
+
+# observed global difference between correlation matrices
+idx = upper.tri(M_ast)
+
+T_obs = sum((M_ast[idx] - M_hc[idx])^2)
+
+# permutation test
+set.seed(101)
+
+B = 10000
+
+diagnosis = dat$diagnosis_simple
+
+T_perm = numeric(B)
+
+for (b in 1:B) {
+
+  diagnosis_perm = sample(diagnosis)
+
+  M_ast_perm = cor(
+    dat[diagnosis_perm == "AST", sensors],
+    use = "pairwise.complete.obs"
+  )
+
+  M_hc_perm = cor(
+    dat[diagnosis_perm == "HC", sensors],
+    use = "pairwise.complete.obs"
+  )
+
+  T_perm[b] = sum(
+    (M_ast_perm[idx] - M_hc_perm[idx])^2
+  )
+}
+
+# permutation p-value
+p_value = (sum(T_perm >= T_obs) + 1) / (B + 1)
+
+T_obs
+p_value
