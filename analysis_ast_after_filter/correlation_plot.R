@@ -55,3 +55,13 @@ plt_cor = ggplot(M_long, aes(x = Var1, y = Var2, fill = value)) +
     axis.text.y = element_text()
   )
 plt_cor
+
+########
+# hclust
+########
+
+M = cor(dat[, sensors], use = "pairwise.complete.obs")
+d = as.dist(1 - abs(M))
+hc = hclust(d, method = "complete")
+
+plot(hc)
