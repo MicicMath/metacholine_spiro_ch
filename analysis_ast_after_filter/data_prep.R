@@ -10,6 +10,15 @@ colnames(rdcp_dat)[colnames(rdcp_dat) == "measurement_id_exhal"] = "m_id"
 
 rdcp_dat = rdcp_dat[rdcp_dat$m_id %in% all_ast_hc_ids, , drop = FALSE]
 
+##################
+# date time object
+##################
+
+rdcp_dat$date_time_exhal = as.POSIXct(
+  rdcp_dat$date_time_exhal,
+  format = "%Y-%m-%d %H:%M:%S"
+)
+
 ###########################
 # subset to relevant labels
 ###########################
@@ -101,6 +110,8 @@ sensors = c(
 cols = c(
   "patient_id",
   "m_id",
+  "date_time_exhal",
+  "operator_exhal",
   "diagnosis",
   "asthma_source",
   "diagnosis_status",
