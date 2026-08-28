@@ -121,3 +121,52 @@ p_value = (sum(T_perm >= T_obs) + 1) / (B + 1)
 
 T_obs
 p_value
+
+#####
+# pca
+#####
+
+pca_plot = function(data, comp1 = "PC1", comp2 = "PC2", title) {
+  X_pca = prcomp(
+    as.matrix(data[, sensors]),
+    center = TRUE,
+    scale. = TRUE
+  )
+
+  pca_importance = as.data.frame(summary(X_pca)$importance)
+
+  pca_dat = data.frame(
+    X_pca$x,
+    m_id = data$m_id
+  )
+
+  comp1_lab = paste0(comp1, " ", round(pca_importance[[comp1]][2] * 100, 1), "%")
+  comp2_lab = paste0(comp2, " ", round(pca_importance[[comp2]][2] * 100, 1), "%")
+
+  plt = ggplot(
+    pca_dat,
+    aes(x = !!sym(comp1), y = !!sym(comp2))
+  ) +
+    geom_hline(yintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+    geom_vline(xintercept = 0, linewidth = 0.4, color = "grey70", linetype = "dashed") +
+    # stat_ellipse(aes(group = batch), show.legend = FALSE, linewidth = 0.5) +
+    geom_point(size = 2.4, alpha = 0.75) +
+    # scale_color_manual(values = diagnosis_colors) +
+    labs(
+      title = paste0("PCA scores ", title),
+      x = comp1_lab,
+      y = comp2_lab
+    ) +
+    theme_classic() +
+    ggtheme_top_right
+
+    return(plt)
+}
+
+pc_ast_1 = pca_plot(dat[dat$diagnosis_simple == "AST", ], "PC1", "PC2", "asthma group")
+pc_hc_1 = pca_plot(dat[dat$diagnosis_simple == "HC", ], "PC1", "PC2", "healty control")
+
+plot_grid(
+  pc_hc_1,
+  pc_ast_1
+)
