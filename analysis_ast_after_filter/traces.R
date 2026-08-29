@@ -12,7 +12,8 @@ traces = lapply(
     trace = ggplot(
       dat,
       aes(
-        x = reorder(record_str, record),
+        # x = reorder(record_str, record),
+        x = date_time_exhal,
         y = !!sym(x),
         color = diagnosis_simple,
         fill = diagnosis_simple
