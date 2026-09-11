@@ -16,6 +16,8 @@ packageManage(
   "effsize",
   "ggrepel",
   "scales",
+  "fmsb",
+  "ggplotify",
   "grid",
   "rspiro",
   "glmnet",

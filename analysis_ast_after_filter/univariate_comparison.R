@@ -320,6 +320,65 @@ plt_bps
 # ggsave("./plots/ast_hc_s3.png", bps$S3, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
 # ggsave("./plots/ast_hc_s7.png", bps$S7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
 
+############
+# radar plot
+############
+
+dat_normalized = dat[, c("diagnosis_simple", sensors)]
+dat_normalized[, sensors] = lapply(
+  dat_normalized[, sensors],
+  function(x) {
+    (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+  }
+)
+
+dat_radar = aggregate(
+  dat_normalized[, sensors],
+  by = list(diagnosis_simple = dat_normalized$diagnosis_simple),
+  FUN = function(x) mean(x, na.rm = TRUE)
+)
+
+rownames(dat_radar) = dat_radar$diagnosis_simple
+dat_radar$diagnosis_simple = NULL
+
+dat_fmsb = rbind(
+  max = rep(1, length(sensors)),
+  min = rep(0, length(sensors)),
+  dat_radar
+)
+
+cols = c("#CC6677", "#4477AA")
+leg = ifelse(rownames(dat_radar) == "AST", "Asthma", "Healthy control")
+
+p_radar = as.ggplot(~{
+  par(
+    mar = c(1, 1, 1, 4),
+    xpd = NA
+  )
+  radarchart(
+    dat_fmsb,
+    pcol = cols,
+    pfcol = adjustcolor(cols, alpha.f = 0.1),
+    plty = 1,
+    plwd = 2,
+    cglcol = "grey",
+    cglty = 1
+  )
+  legend(
+    inset = c(-0.05, 0),
+    "topright",
+    legend = leg,
+    col = cols,
+    lty = 1,
+    lwd = 2,
+    bty = "n"
+  )
+})
+p_radar
+
+# ggsave("./plots/radar_plot.png", plot = p_radar, width = 14, height = 14, units = "cm", dpi = 300, bg = "white")
+# ggsave("./plots/radar_plot.pdf", plot = p_radar, width = 14, height = 14, units = "cm")
+
 #############
 # spider plot
 #############
