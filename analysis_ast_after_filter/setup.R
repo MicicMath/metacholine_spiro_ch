@@ -14,6 +14,7 @@ packageManage(
   "ggplot2",
   "gridExtra",
   "effsize",
+  "effectsize",
   "ggrepel",
   "scales",
   "fmsb",

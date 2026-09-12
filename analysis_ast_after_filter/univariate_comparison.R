@@ -251,6 +251,85 @@ p_dat_format
 
 # write.csv(p_dat_format, "./tables/univariate_results.csv", row.names = FALSE)
 
+########
+# t-test
+########
+
+t_test = mclapply(
+  sensors,
+  function(x) {
+    ast = dat[dat$diagnosis_simple == "AST", x]
+    hc  = dat[dat$diagnosis_simple == "HC", x]
+
+    # Welch's t-test (default: var.equal = FALSE)
+    tt = t.test(
+      ast,
+      hc,
+      conf.level = 0.95,
+      var.equal = FALSE
+    )
+
+    # Cohen's d using unpooled SD, to accompany Welch's t-test
+    d_eff = effectsize::cohens_d(
+      ast,
+      hc,
+      pooled_sd = FALSE,
+      ci = 0.95
+    )
+
+    mean_diff = unname(tt$estimate[[1]] - tt$estimate[[2]])
+
+    d = data.frame(
+      sensor = x,
+
+      diff_ast_vs_hc_ci = paste0(
+        n_rnd(mean_diff, 2),
+        " (",
+        n_rnd(tt$conf.int[[1]], 2),
+        ", ",
+        n_rnd(tt$conf.int[[2]], 2),
+        ")"
+      ),
+
+      cohens_d_ci = paste0(
+        n_rnd(d_eff$Cohens_d, 2),
+        " (",
+        n_rnd(d_eff$CI_low, 2),
+        ", ",
+        n_rnd(d_eff$CI_high, 2),
+        ")"
+      ),
+
+      p_val = tt$p.value
+    )
+
+    rownames(d) = NULL
+    d
+  },
+  mc.cores = parallel::detectCores() - 2
+)
+
+t_test = do.call(rbind, t_test)
+
+t_test$p_adj = p.adjust(
+  t_test$p_val,
+  method = "fdr"
+)
+
+p_dat_format = t_test
+p_dat_format$p_val = p_rnd(p_dat_format$p_val)
+p_dat_format$p_adj = p_rnd(p_dat_format$p_adj)
+
+colnames(p_dat_format) = c(
+  "Sensor",
+  "Mean difference (95% CI)",
+  "Cohen's d (95% CI)",
+  "Raw p-value",
+  "Adjusted p-value"
+)
+
+p_dat_format
+
 ####
 # bp
 ####

@@ -176,3 +176,79 @@ plot_grid(
   pc_hc_1,
   pc_ast_1
 )
+
+#################
+# convarince test
+#################
+
+############################
+# permutation covariance test
+############################
+
+X = as.matrix(dat[, sensors])
+group = factor(dat$diagnosis_simple, levels = c("AST", "HC"))
+
+# global standardization
+# do NOT standardize separately within AST and HC
+X = scale(X)
+
+# remove group-specific means
+X_res = X
+
+for (g in levels(group)) {
+  idx = group == g
+  group_data = X[idx, , drop = FALSE]
+  group_means = colMeans(group_data)
+  for (j in 1:ncol(group_data)) {
+    group_data[, j] = group_data[, j] - group_means[j]
+  }
+  X_res[idx, ] = group_data
+}
+
+# difference between covariance matrices
+cov_stat = function(X, group) {
+  cov_ast = cov(X[group == "AST", , drop = FALSE])
+  cov_hc = cov(X[group == "HC", , drop = FALSE])
+
+  # squared Frobenius distance
+  sum((cov_ast - cov_hc)^2)
+}
+
+# observed difference
+stat_observed = cov_stat(X_res, group)
+
+# permutation distribution
+set.seed(101)
+
+n_perm = 10000
+
+stat_perm = replicate(
+  n_perm,
+  {
+    group_perm = sample(group)
+    cov_stat(X_res, group_perm)
+  }
+)
+
+# permutation p-value
+p_value = (
+  1 + sum(stat_perm >= stat_observed)
+) / (
+  n_perm + 1
+)
+
+stat_observed
+p_value
+
+# optional plot
+hist(
+  stat_perm,
+  breaks = 40,
+  main = "Permutation test of covariance matrices",
+  xlab = "Difference between covariance matrices"
+)
+abline(
+  v = stat_observed,
+  col = "red",
+  lwd = 2
+)
