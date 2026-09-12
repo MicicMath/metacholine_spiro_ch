@@ -61,6 +61,12 @@ cor_plot = function(data, title) {
   plt_cor
 }
 
+cor_plot(dat[, sensors], title = "All samples")
+
+##########################
+# col plots for eahc group
+##########################
+
 plt_cor_1 = cor_plot(dat[dat$diagnosis_simple == "AST", sensors], "Asthma group")
 plt_cor_2 = cor_plot(dat[dat$diagnosis_simple == "HC", sensors], "Healthy controls")
 
