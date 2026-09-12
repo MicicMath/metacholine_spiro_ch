@@ -252,3 +252,16 @@ abline(
   col = "red",
   lwd = 2
 )
+
+#################################
+# box M test for equal covariance
+#################################
+
+library("biotools")
+
+X = as.matrix(dat[, sensors])
+group = factor(dat$diagnosis_simple)
+
+box_m = boxM(X, group)
+
+box_m
