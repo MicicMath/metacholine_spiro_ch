@@ -72,4 +72,3 @@ p2 = ggplot(pca_dat$d, aes(x = PC1, y = PC3, color = label)) +
 plot_grid(
   p1, p2
 )
-inherit.aes = FALSE
