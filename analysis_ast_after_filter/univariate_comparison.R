@@ -403,31 +403,43 @@ plt_bps
 # radar plot
 ############
 
-dat_normalized = dat[, c("diagnosis_simple", sensors)]
-dat_normalized[, sensors] = lapply(
-  dat_normalized[, sensors],
-  function(x) {
-    (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
-  }
-)
+# dat_normalized = dat[, c("diagnosis_simple", sensors)]
+# dat_normalized[, sensors] = lapply(
+#   dat_normalized[, sensors],
+#   function(x) {
+#     (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+#   }
+# )
 
 dat_radar = aggregate(
-  dat_normalized[, sensors],
-  by = list(diagnosis_simple = dat_normalized$diagnosis_simple),
+  # dat_normalized[, sensors],
+  dat[, sensors],
+  # by = list(diagnosis_simple = dat_normalized$diagnosis_simple),
+  by = list(diagnosis_simple = dat$diagnosis_simple),
   FUN = function(x) mean(x, na.rm = TRUE)
 )
 
 rownames(dat_radar) = dat_radar$diagnosis_simple
 dat_radar$diagnosis_simple = NULL
 
+radar_min = floor(min(unlist(dat[, sensors]), na.rm = TRUE) * 10) / 10
+radar_max = ceiling(max(unlist(dat[, sensors]), na.rm = TRUE) * 10) / 10
+
 dat_fmsb = rbind(
-  max = rep(1, length(sensors)),
-  min = rep(0, length(sensors)),
+  max = rep(radar_max, length(sensors)),
+  min = rep(radar_min, length(sensors)),
   dat_radar
 )
 
+# dat_fmsb = rbind(
+#   max = rep(1, length(sensors)),
+#   min = rep(0, length(sensors)),
+#   dat_radar
+# )
+
 cols = c("#CC6677", "#4477AA")
 leg = ifelse(rownames(dat_radar) == "AST", "Asthma", "Healthy control")
+axis_labels = format(seq(radar_min, radar_max, length.out = 5), trim = TRUE)
 
 p_radar = as.ggplot(~{
   par(
@@ -436,12 +448,17 @@ p_radar = as.ggplot(~{
   )
   radarchart(
     dat_fmsb,
+    axistype = 1,
+    # caxislabels = c("0", "0.25", "0.50", "0.75", "1.00"),
+    seg = 4,
+    caxislabels = axis_labels,
     pcol = cols,
     pfcol = adjustcolor(cols, alpha.f = 0.1),
     plty = 1,
     plwd = 2,
     cglcol = "grey",
-    cglty = 1
+    cglty = 1,
+    axislabcol = "grey"
   )
   legend(
     inset = c(-0.05, 0),
@@ -455,8 +472,8 @@ p_radar = as.ggplot(~{
 })
 p_radar
 
-# ggsave("./plots/radar_plot.png", plot = p_radar, width = 14, height = 14, units = "cm", dpi = 300, bg = "white")
-# ggsave("./plots/radar_plot.pdf", plot = p_radar, width = 14, height = 14, units = "cm")
+# ggsave("./plots/radar_plot_actual_scale.png", plot = p_radar, width = 14, height = 14, units = "cm", dpi = 300, bg = "white")
+# ggsave("./plots/radar_plot_actual_scale.pdf", plot = p_radar, width = 14, height = 14, units = "cm")
 
 #############
 # spider plot
@@ -606,6 +623,6 @@ temp_plt_s3 = ggplot(dat, aes(x = diagnosis_simple, y = S3)) +
   labs(title = "S3") +
   theme_classic()
 
-plot_grid(
-  temp_plt_s7, temp_plt_s3
-)
+# plot_grid(
+#   temp_plt_s7, temp_plt_s3
+# )
