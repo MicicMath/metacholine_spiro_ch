@@ -545,7 +545,7 @@ plot_sensor_pair = function(dat, sensor_x, sensor_y) {
 }
 
 plt_s3_s7 = plot_sensor_pair(dat, "S7", "S3")
-plt_s3_s7
+# plt_s3_s7
 
 # ggsave("./plots/spider_plot_s3_s7.png", plt_s3_s7, width = 10, height = 10, units = "cm", dpi = 400, bg = "white")
 
