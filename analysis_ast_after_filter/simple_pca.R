@@ -72,3 +72,47 @@ p2 = ggplot(pca_dat$d, aes(x = PC1, y = PC3, color = label)) +
 plot_grid(
   p1, p2
 )
+
+#####
+# hierarchical clustering
+#####
+
+run_hclust_dat = function(data) {
+  X_mat = data[, sensors]
+
+  # Remove zero-variance sensors
+  var_cols = apply(X_mat, 2, var, na.rm = TRUE)
+  valid = !is.na(var_cols) & var_cols > 0
+  X_mat = X_mat[, valid]
+
+  # Standardize sensors
+  X_scaled = scale(X_mat)
+
+  # Hierarchical clustering
+  d = dist(X_scaled, method = "euclidean")
+  hc = hclust(d, method = "ward.D2")
+
+  list(
+    hc = hc,
+    X = X_scaled
+  )
+}
+
+hclust_dat = run_hclust_dat(data = dat)
+
+p3 = factoextra::fviz_dend(
+  hclust_dat$hc,
+  k = 2,
+  k_colors = c("#CC6677", "#4477AA"),
+  rect = TRUE,
+  rect_fill = FALSE,
+  show_labels = FALSE,
+  color_labels_by_k = FALSE
+) +
+  labs(
+    title = "",
+    x = "Samples",
+    y = "Height"
+  ) +
+  theme_classic()
+p3
