@@ -107,7 +107,8 @@ p3 = factoextra::fviz_dend(
   rect = TRUE,
   rect_fill = FALSE,
   show_labels = FALSE,
-  color_labels_by_k = FALSE
+  color_labels_by_k = FALSE,
+  lwd = .5
 ) +
   labs(
     title = "",
