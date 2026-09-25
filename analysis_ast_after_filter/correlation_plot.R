@@ -172,10 +172,10 @@ pca_plot = function(data, comp1 = "PC1", comp2 = "PC2", title) {
 pc_ast_1 = pca_plot(dat[dat$diagnosis_simple == "AST", ], "PC1", "PC2", "asthma group")
 pc_hc_1 = pca_plot(dat[dat$diagnosis_simple == "HC", ], "PC1", "PC2", "healty control")
 
-plot_grid(
-  pc_hc_1,
-  pc_ast_1
-)
+# plot_grid(
+#   pc_hc_1,
+#   pc_ast_1
+# )
 
 #################
 # convarince test
@@ -241,17 +241,17 @@ stat_observed
 p_value
 
 # optional plot
-hist(
-  stat_perm,
-  breaks = 40,
-  main = "Permutation test of covariance matrices",
-  xlab = "Difference between covariance matrices"
-)
-abline(
-  v = stat_observed,
-  col = "red",
-  lwd = 2
-)
+# hist(
+#   stat_perm,
+#   breaks = 40,
+#   main = "Permutation test of covariance matrices",
+#   xlab = "Difference between covariance matrices"
+# )
+# abline(
+#   v = stat_observed,
+#   col = "red",
+#   lwd = 2
+# )
 
 #################################
 # box M test for equal covariance
