@@ -5,10 +5,10 @@ source("./source_selected_ast_hc.R")
 # import rdpc
 #############
 
-rdcp_dat = read.csv("../dat/rdcp_exhal_analysis.csv")
+rdcp_dat = read.csv("../dat/rdcp_measurements_merged.csv")
 colnames(rdcp_dat)[colnames(rdcp_dat) == "measurement_id_exhal"] = "m_id"
 
-rdcp_dat = rdcp_dat[rdcp_dat$m_id %in% all_ast_hc_ids, , drop = FALSE]
+rdcp_dat = rdcp_dat[rdcp_dat$m_id %in% c(train_set_ast_hc_ids, test_set_ast_hc_ids), , drop = FALSE]
 
 ##################
 # date time object
@@ -64,21 +64,25 @@ rdcp_exhal_dat$fvc_z = round(rdcp_exhal_dat$fvc_z, 2)
 
 e_dat_0 = read.csv("../dat/dat_ch_enose_20260105.csv")
 e_dat_1 = read.csv("../dat/dat_ch_enose_20260808.csv")
+e_dat_2 = read.csv("../dat/dat_ch_enose_20261027.csv")
 
 colnames(e_dat_0)[colnames(e_dat_0) == "id"] = "m_id"
 colnames(e_dat_1)[colnames(e_dat_1) == "id"] = "m_id"
+colnames(e_dat_2)[colnames(e_dat_2) == "id"] = "m_id"
 
 e_dat_0 = e_dat_0[e_dat_0$m_id %in% rdcp_exhal_dat$m_id, ]
 e_dat_1 = e_dat_1[e_dat_1$m_id %in% rdcp_exhal_dat$m_id, ]
+e_dat_2 = e_dat_2[e_dat_2$m_id %in% rdcp_exhal_dat$m_id, ]
 
 e_dat_0$batch = "batch_20260105"
 e_dat_1$batch = "batch_20260808"
+e_dat_2$batch = "batch_20261027"
 
 ########################
 # merge with REDCap data
 ########################
 
-e_dat = rbind(e_dat_0, e_dat_1)
+e_dat = rbind(e_dat_0, e_dat_1, e_dat_2)
 
 final_ast_hc_cf_dat = merge(
   e_dat,
@@ -183,3 +187,11 @@ final_ast_hc_cf_dat = final_ast_hc_cf_dat[
   ,
   drop = FALSE
 ]
+
+##################################
+# specify train and test data sets
+##################################
+
+test_set_final_ast_hc_cf_dat = final_ast_hc_cf_dat[final_ast_hc_cf_dat$batch %in% c("batch_20261027"), , drop = FALSE]
+
+final_ast_hc_cf_dat = final_ast_hc_cf_dat[final_ast_hc_cf_dat$batch %in% c("batch_20260105", "batch_20260808"), , drop = FALSE]

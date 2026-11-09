@@ -103,7 +103,7 @@ hc_ids = c(
   130522
 )
 
-all_ast_hc_ids = c(ast_ids, hc_ids)
+train_set_ast_hc_ids = c(ast_ids, hc_ids)
 
 ast_test_ids = c(
   132234,

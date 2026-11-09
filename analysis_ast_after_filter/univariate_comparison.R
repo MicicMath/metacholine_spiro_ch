@@ -622,7 +622,17 @@ temp_plt_s3 = ggplot(dat, aes(x = diagnosis_simple, y = S3)) +
   ) +
   labs(title = "S3") +
   theme_classic()
+temp_plt_s6bh = ggplot(dat, aes(x = diagnosis_simple, y = S6BH)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(position = jitter_pos) +
+  geom_text_repel(
+    aes(label = m_id),
+    position = jitter_pos,
+    max.overlap = Inf
+  ) +
+  labs(title = "S6BH") +
+  theme_classic()
 
-# plot_grid(
-#   temp_plt_s7, temp_plt_s3
-# )
+plot_grid(
+  temp_plt_s7, temp_plt_s3
+)
