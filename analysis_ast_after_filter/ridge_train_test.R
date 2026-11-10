@@ -69,7 +69,7 @@ cv_runs = lapply(
       family = "binomial",
       alpha = 0,
       weights = w_train,
-      foldid = make_foldid(y_train, k = 10),
+      foldid = make_foldid(y_train, k = 5),
       type.measure = "deviance",
       lambda.min.ratio = 1e-6,
       standardize = TRUE
