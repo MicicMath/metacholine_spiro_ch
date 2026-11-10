@@ -268,18 +268,44 @@ proba_test_dat = data.frame(
 )
 
 plt_test_proba = ggplot(proba_test_dat, aes(x = diagnosis_simple, y = p_test)) +
-  geom_boxplot(outlier.shape = NA) +
-  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123)) +
+  geom_boxplot(
+    width = 0.5,
+    fill = "white",
+    linewidth = 0.4,
+    alpha = 0.1,
+    outlier.shape = NA
+  ) +
+  geom_point(aes(
+    color = diagnosis_simple),
+    size = 2.5,
+    alpha = 0.8,
+    position = position_jitter(width = 0.15, height = 0, seed = 123)
+  ) +
+  scale_color_manual(
+    # values = c("#29ABE2", "#D9534F", "#A1A79E", "#F2D75C"),
+    values = c("#CC6677", "#4477AA"),
+    name = NULL
+  ) +
+  scale_fill_manual(
+    # values = c("#29ABE2", "#D9534F", "#A1A79E", "#F2D75C"),
+    values = c("#CC6677", "#4477AA"),
+    name = NULL
+  ) +
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   ylim(0, 1) +
   labs(
     x = "",
-    y = "Predicted probability AST (test)"
+    y = "Predicted probability"
   ) +
   theme_classic()
 if (interactive()) {
   plt_test_proba
 }
+
+plt_tot = plot_grid(
+  plt_test_roc, plt_test_proba
+)
+plt_tot
 
 ############
 # save plots
