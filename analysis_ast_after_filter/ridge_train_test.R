@@ -1,5 +1,75 @@
 source("./data_prep.R")
 
+auc_fn = function(y_true, y_prob) {
+  ROCR::performance(
+    ROCR::prediction(as.numeric(y_prob), y_true),
+    "auc"
+  )@y.values[[1]]
+}
+
+perm_importance_fn = function(model, X_test, y_test, sensors, baseline_auc, lambda_value, B = 1000) {
+  perm_list = parallel::mclapply(sensors, function(sensor) {
+    drops = replicate(B, {
+      X_perm = X_test
+      X_perm[, sensor] = sample(X_perm[, sensor])
+
+      y_prob_perm = predict(
+        model,
+        newx = X_perm,
+        s = lambda_value,
+        type = "response"
+      )
+
+      auc_perm = auc_fn(y_true = y_test, y_prob = y_prob_perm)
+      auc_drop = baseline_auc - auc_perm
+
+      return(auc_drop)
+    })
+
+    data.frame(
+      sensor = sensor,
+      mean_auc_drop = mean(drops, na.rm = TRUE),
+      sd_auc_drop = sd(drops, na.rm = TRUE),
+      ci_low = quantile(drops, probs = 0.025, na.rm = TRUE),
+      ci_high = quantile(drops, probs = 0.975, na.rm = TRUE),
+      row.names = NULL
+    )
+  }, mc.cores = max(1, parallel::detectCores() - 2))
+
+  perm_imp = do.call(rbind, perm_list)
+  perm_imp = perm_imp[order(-perm_imp$mean_auc_drop), ]
+
+  return(perm_imp)
+}
+
+perm_importance_plot_fn = function(perm_imp, xlim) {
+  plot_dat = perm_imp
+  plot_dat$sensor = factor(
+    plot_dat$sensor,
+    levels = plot_dat$sensor[order(plot_dat$mean_auc_drop)]
+  )
+
+  p = ggplot(
+    plot_dat,
+    aes(x = mean_auc_drop, y = sensor)
+  ) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_errorbar(
+      aes(xmin = ci_low, xmax = ci_high),
+      width = 0,
+      orientation = "y"
+    ) +
+    geom_point(size = 2.5, color = "darkblue") +
+    coord_cartesian(xlim = xlim) +
+    labs(
+      x = "Mean AUC drop after permutation",
+      y = "Sensor"
+    ) +
+    theme_classic()
+
+  return(p)
+}
+
 #############################################
 # train (batches 1 + 2) and test (batch 3) data
 #############################################
@@ -307,6 +377,26 @@ plt_tot = plot_grid(
 )
 plt_tot
 
+################################
+# permutation feature importance
+################################
+
+perm_imp = perm_importance_fn(
+  model = fit_final,
+  X_test = X_test,
+  y_test = y_test,
+  sensors = sensors,
+  baseline_auc = unname(metrics_test["auc"]),
+  lambda_value = lambda_best,
+  B = 1000
+)
+perm_imp
+
+perm_importance_plot_fn(
+  perm_imp,
+  range(c(perm_imp$ci_low, perm_imp$ci_high), na.rm = TRUE)
+)
+
 ############
 # save plots
 ############
@@ -320,3 +410,111 @@ plt_tot
 #   dpi = 400,
 #   bg = "white"
 # )
+
+########################################################
+# This is AUC Shapley, NOT conventional prediction SHAP.
+########################################################
+
+# Only 13 sensors: all 2^13 = 8192 subsets can be evaluated exactly.
+X_shap = X_test[, sensors, drop = FALSE]
+p_shap = ncol(X_shap)
+stopifnot(p_shap == 13L, all(sensors %in% rownames(coeffs_final)))
+
+beta_shap = as.numeric(coeffs_final[sensors, 1])
+names(beta_shap) = sensors
+
+# Each column gives its contribution to the fixed model's log-odds.
+# AUC is invariant to the intercept and logistic transformation.
+sensor_logit = sweep(X_shap, 2, beta_shap, `*`)
+
+masks = 0:(2^p_shap - 1L)
+in_subset = outer(
+  masks, 0:(p_shap - 1L),
+  FUN = function(mask, bit) bitwAnd(mask, bitwShiftL(1L, bit)) != 0L
+)
+subset_size = rowSums(in_subset)
+
+# AUC for every subset, evaluated on the ORIGINAL test labels.
+subset_scores = in_subset %*% t(sensor_logit)
+subset_auc = vapply(
+  seq_len(nrow(subset_scores)),
+  function(i) auc_fn(y_true = y_test, y_prob = subset_scores[i, ]),
+  numeric(1)
+)
+
+# The empty subset gives tied scores (AUC = 0.5).
+# The complete subset MUST reproduce the fitted ridge model's AUC.
+stopifnot(abs(subset_auc[1] - 0.5) < 1e-10)
+stopifnot(abs(tail(subset_auc, 1) - unname(metrics_test['auc'])) < 1e-10)
+
+# Exact Shapley weights: 1 / (p * choose(p - 1, |S|)).
+auc_shapley = vapply(seq_len(p_shap), function(j) {
+  without_j = which(!in_subset[, j])
+  with_j = bitwOr(masks[without_j], bitwShiftL(1L, j - 1L)) + 1L
+  weights = 1 / (p_shap * choose(p_shap - 1L, subset_size[without_j]))
+  sum(weights * (subset_auc[with_j] - subset_auc[without_j]))
+}, numeric(1))
+
+stopifnot(abs(sum(auc_shapley) - (unname(metrics_test['auc']) - 0.5)) < 1e-10)
+
+auc_shapley_results = data.frame(
+  sensor = sensors,
+  auc_shapley = auc_shapley,
+  row.names = NULL
+)
+auc_shapley_results = auc_shapley_results[
+  order(-auc_shapley_results$auc_shapley), , drop = FALSE
+]
+print(auc_shapley_results)
+cat('Sum of AUC Shapley values:', sum(auc_shapley), '\n')
+
+plt_auc_shapley = ggplot(
+  auc_shapley_results,
+  aes(x = auc_shapley, y = reorder(sensor, auc_shapley))
+) +
+  geom_vline(xintercept = 0, linetype = 'dashed') +
+  geom_col(fill = 'darkblue', width = 0.7) +
+  labs(x = 'Exact Shapley contribution to test AUC above 0.5', y = 'Sensor') +
+  theme_classic()
+print(plt_auc_shapley)
+
+########################################################
+# Standard interventional SHAP of individual predictions
+# Exact for linear ridge log-odds with a training-mean baseline.
+# Unlike AUC Shapley, these values explain the model's log-odds,
+# NOT AUC. They do not account for conditional sensor dependence.
+########################################################
+
+reference_mean = colMeans(X_train[, sensors, drop = FALSE])
+shap_logit = sweep(X_shap, 2, reference_mean, `-`)
+shap_logit = sweep(shap_logit, 2, beta_shap, `*`)
+
+baseline_logit = as.numeric(coeffs_final['(Intercept)', 1]) +
+  sum(beta_shap * reference_mean)
+model_logit = as.numeric(predict(
+  fit_final, newx = X_test, s = lambda_best, type = 'link'
+))
+
+# Check exact reconstruction of each participant's fitted log-odds.
+stopifnot(max(abs(baseline_logit + rowSums(shap_logit) - model_logit)) < 1e-8)
+
+shap_logit_results = data.frame(
+  sensor = sensors,
+  mean_abs_shap_logit = colMeans(abs(shap_logit)),
+  mean_shap_logit = colMeans(shap_logit),
+  row.names = NULL
+)
+shap_logit_results = shap_logit_results[
+  order(-shap_logit_results$mean_abs_shap_logit), , drop = FALSE
+]
+print(shap_logit_results)
+
+plt_shap_logit = ggplot(
+  shap_logit_results,
+  aes(x = mean_abs_shap_logit,
+      y = reorder(sensor, mean_abs_shap_logit))
+) +
+  geom_col(fill = 'darkblue', width = 0.7) +
+  labs(x = 'Mean absolute SHAP value (log-odds)', y = 'Sensor') +
+  theme_classic()
+print(plt_shap_logit)
