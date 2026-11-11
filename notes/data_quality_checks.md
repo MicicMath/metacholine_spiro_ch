@@ -8,13 +8,13 @@ These measurements belong to earlier eNose batches, but their recorded dates fal
 
 Neighbouring measurement records suggest the following corrections:
 
-| Measurement ID | Recorded date | Suggested date — to confirm |
-|---|---|---|
-| 130456 | 2026-10-29 | 2025-10-29 |
-| 130494 | 2026-11-05 | 2025-11-05 |
-| 130501 | 2026-11-06 | 2025-11-06 |
-| 130558 | 2026-11-13 | 2025-11-13 |
-| 131505 | 2026-12-06 | 2026-06-12 |
+| Patient ID (patient_id) | Measurement ID | Recorded date | Suggested date — to confirm |
+|---|---|---|---|
+| 3984348 | 130456 | 2026-10-29 | 2025-10-29 |
+| 5682900 | 130494 | 2026-11-05 | 2025-11-05 |
+| 5748974 | 130501 | 2026-11-06 | 2025-11-06 |
+| 2921776 | 130558 | 2026-11-13 | 2025-11-13 |
+| 3946268 | 131505 | 2026-12-06 | 2026-06-12 |
 
 The first four belong to batch 20260105 and appear to have an incorrect year. Measurement 131505 belongs to batch 20260808 and appears to have its day and month reversed: the surrounding measurements 131504, 131506 and 131507 are dated 12 June 2026.
 
@@ -22,12 +22,12 @@ The first four belong to batch 20260105 and appear to have an incorrect year. Me
 
 ## 2. Two test measurements may belong to the same child
 
-| Measurement ID | Recorded date and time | Recorded visit |
-|---|---|---|
-| 131689 | 2026-07-08 14:50 | 1 |
-| 131824 | 2026-08-05 15:00 | 1 |
+| Patient ID (patient_id) | Measurement ID | Recorded date and time | Recorded visit |
+|---|---|---|---|
+| 3915110 | 131689 | 2026-07-08 14:50 | 1 |
+| 3915110 | 131824 | 2026-08-05 15:00 | 1 |
 
-These records share the same patient ID, date of birth and sex, but have different REDCap record IDs. Both are asthma measurements in test batch 20261027.
+These records share patient ID 3915110, date of birth and sex, but have different REDCap record IDs. Both are asthma measurements in test batch 20261027.
 
 The analysis keeps records labelled “visit 1.” Because both records carry that label, both pass the filter and enter the test set. The filter does not independently identify the earliest measurement for each child.
 
