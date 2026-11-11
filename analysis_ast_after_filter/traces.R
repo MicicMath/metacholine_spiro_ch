@@ -1,10 +1,12 @@
 source("./data_prep.R")
 
-dat = final_ast_hc_cf_dat
+dat = rbind(final_ast_hc_cf_dat, test_set_final_ast_hc_cf_dat)
+dat$batch_simple = ifelse(dat$batch == "batch_20261027", "test", "train")
 
 dat = dat[order(dat$date_time_exhal), ]
 dat$record = 1:nrow(dat)
 dat$record_str = paste0("p", dat$record)
+rownames(dat) = NULL
 
 traces = lapply(
   sensors,
@@ -16,16 +18,17 @@ traces = lapply(
         x = date_time_exhal,
         y = !!sym(x),
         color = diagnosis_simple,
-        fill = diagnosis_simple
+        fill = diagnosis_simple,
+        shape = batch_simple
       )
     ) +
-      geom_point(size = 1, stroke = 1) +
+      geom_point(size = 1.5, stroke = 1) +
       # geom_text_repel(aes(label = sample_base_id)) +
       # scale_color_viridis_d(option = "D", end = 0.9) +
       # scale_fill_viridis_d(option = "D", end = 0.9) +
       scale_shape_manual(values = c(1, 3)) +
-      scale_color_brewer(palette = "Dark2") +
-      scale_fill_brewer(palette = "Dark2") +
+      scale_color_manual(values = c("#4477AA", "#CC6677")) +
+      scale_fill_manual(values = c("#4477AA", "#CC6677")) +
       labs(
         title = x,
         x = "",
