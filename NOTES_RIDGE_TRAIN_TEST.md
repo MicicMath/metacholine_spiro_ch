@@ -32,12 +32,19 @@ Script: `analysis_ast_after_filter/ridge_train_test.R` (run from inside `analysi
 
 - Confusion matrix: 33/36 AST and 31/33 HC correct, so 5 misclassified.
 
-## Caveats
-- The test set is now used. If the model or tuning changes because of this result, the test is no longer independent.
-- Coefficients are on each sensor's original scale, so their sizes can't be compared between sensors.
-- Training batch 1 is mostly HC (8 AST, 29 HC), so batch and diagnosis are partly confounded in training.
+## Interpretation
+- Lambda selection and model fitting use training data only. The fitted model is then evaluated on the held-out test batch.
+- The reported AUC and other performance measures describe predictions made using all 13 sensors together.
 
-## Next round (deferred)
-- Permutation feature importance on the test set: shuffle one sensor in `X_test` (1000×) and measure the AUC drop, with an interval.
-- Grouped permutation for the correlated sensors S1BH, S3BH and S4BH (Spearman 0.76 to 0.84 in train).
-- SHAP: for a linear model it is exact, beta_j × (x_j − training mean). Mainly useful to explain the 5 misclassified test samples.
+### Why coefficient size does not directly rank sensor importance
+
+`standardize = TRUE` standardizes the sensor values internally during model fitting. However, `coef(fit_final, s = lambda_best)` converts the fitted coefficients back to the original sensor scales. This is normal glmnet behaviour.
+
+Each returned coefficient describes the change in the model's asthma score (log-odds) for a one-unit increase in that sensor, holding the other sensor values fixed. It is not a percentage-point change in predicted probability.
+
+Sensors vary over different numerical ranges. A sensor with a narrow range can therefore have a large coefficient: the effect on the model's score depends on **the coefficient multiplied by the change in sensor value**.
+
+For example, S6BH's coefficient of approximately 19.15 does not automatically make it more important than S7, whose coefficient is approximately 10.27. The amount each sensor varies also matters. The raw coefficient sizes alone cannot establish which sensor contributes more to test-set discrimination.
+
+## Optional sensor interpretation
+Supplementary permutation-importance and Shapley analyses are available in `analysis_ast_after_filter/ridge_train_test_with_shap_perm_etc.R`. They explore how the fitted model uses individual sensors and complement the main train/test performance analysis.
