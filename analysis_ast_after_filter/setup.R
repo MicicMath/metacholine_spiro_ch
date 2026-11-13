@@ -18,6 +18,7 @@ packageManage(
   "ggrepel",
   "scales",
   "fmsb",
+  "ComplexHeatmap",
   "ggplotify",
   "grid",
   "rspiro",
