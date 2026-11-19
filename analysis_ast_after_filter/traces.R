@@ -27,8 +27,8 @@ traces = lapply(
       # scale_color_viridis_d(option = "D", end = 0.9) +
       # scale_fill_viridis_d(option = "D", end = 0.9) +
       scale_shape_manual(values = c(1, 3)) +
-      scale_color_manual(values = c("#4477AA", "#CC6677")) +
-      scale_fill_manual(values = c("#4477AA", "#CC6677")) +
+      scale_color_manual(values = c("#CC6677", "#4477AA")) +
+      scale_fill_manual(values = c("#CC6677", "#4477AA")) +
       labs(
         title = x,
         x = "",
